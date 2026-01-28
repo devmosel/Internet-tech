@@ -1,0 +1,52 @@
+# Docker ignore file for Next.js application
+# Ignore node_modules
+node_modules
+npm-debug.log
+
+# Ignore Next.js build output
+.next
+out
+
+# Ignore development files
+.git
+.gitignore
+README.md
+*.md
+
+# Ignore environment files (add them via docker run -e or docker-compose)
+.env
+.env.local
+.env.*.local
+
+# Ignore IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore test files
+**/__tests__/**
+**/*.test.js
+**/*.test.jsx
+**/*.spec.js
+**/*.spec.jsx
+
+# Ignore Docker files
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Ignore CI/CD files
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Ignore misc
+*.log
+coverage
+.cache
