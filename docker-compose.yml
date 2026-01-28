@@ -78,7 +78,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:5001
+      - NEXT_PUBLIC_API_URL=http://seminar.devmosel.com
     depends_on:
       - backend
     networks:
