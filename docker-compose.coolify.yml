@@ -1,0 +1,98 @@
+version: '3.8'
+
+# Coolify-compatible Docker Compose
+# No explicit port mappings - Coolify manages this
+
+services:
+  # MariaDB Database
+  db:
+    image: mariadb:11.2
+    container_name: openbo_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-openbo_db}
+      MYSQL_USER: ${DB_USER:-openbo_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-openbo_pass}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - openbo_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flask Backend Application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: openbo_backend
+    restart: unless-stopped
+    expose:
+      - "5000"
+    environment:
+      # Database configuration
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-openbo_db}
+      DB_USER: ${DB_USER:-openbo_user}
+      DB_PASSWORD: ${DB_PASSWORD:-openbo_pass}
+
+      # Flask configuration
+      FLASK_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-this}
+
+      # Database URL
+      DATABASE_URL: mysql+pymysql://${DB_USER:-openbo_user}:${DB_PASSWORD:-openbo_pass}@db:3306/${DB_NAME:-openbo_db}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - openbo_network
+    volumes:
+      - ./backend/logs:/app/logs
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 10 &&
+        echo 'Running migrations...' &&
+        python migrate.py &&
+        echo 'Seeding database...' &&
+        python seed.py &&
+        echo 'Starting application...' &&
+        python run.py
+      "
+    labels:
+      - "coolify.managed=true"
+
+  # Next.js Frontend Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+    container_name: openbo_frontend
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    depends_on:
+      - backend
+    networks:
+      - openbo_network
+    labels:
+      - "coolify.managed=true"
+
+networks:
+  openbo_network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local

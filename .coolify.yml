@@ -1,0 +1,70 @@
+# Coolify Configuration for OpenBO (Full Stack)
+# This file tells Coolify how to deploy both backend and frontend
+
+services:
+  # Frontend Service
+  frontend:
+    type: dockerfile
+    dockerfile: frontend/Dockerfile
+    buildContext: frontend
+    port: 3000
+    healthcheck:
+      url: /
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${BACKEND_URL}
+    restart: unless-stopped
+
+  # Backend Service  
+  backend:
+    type: dockerfile
+    dockerfile: backend/Dockerfile
+    buildContext: backend
+    port: 5000
+    healthcheck:
+      url: /api/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ./backend/logs:/app/logs
+    restart: unless-stopped
+
+  # Database Service
+  db:
+    type: mariadb:11.2
+    port: 3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Deployment Configuration
+deployment:
+  branch: main
+  auto_deploy: true
+
+# Note: Coolify will automatically assign external ports
+# You don't need to specify port mappings like "3001:3000"
+# Coolify handles that through its proxy/load balancer
