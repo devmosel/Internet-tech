@@ -1,857 +1,485 @@
-## openBO — Backend (Penjelasan dalam Bahasa Indonesia)
+﻿# OpenBO — Office Booking System Backend
 
-Backend untuk sistem booking openBO menggunakan Flask dan MariaDB. Struktur mengikuti prinsip Clean Architecture: Routes → Controllers → UseCases → Repositories → Models.
+![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.0-green?logo=flask&logoColor=white)
+![MariaDB](https://img.shields.io/badge/MariaDB-11.2-brown?logo=mariadb&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-5.x-black?logo=socketdotio&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
 
-Ringkasan singkat:
-- Bahasa: Python (Flask)
-- Database: MariaDB (mysql+pymysql)
-- ORM: SQLAlchemy
-- Autentikasi: JWT (PyJWT) + bcrypt untuk hashing password
-
-README ini menjelaskan struktur folder, alur request → response, serta poin penting seperti logika ketersediaan ruang, migrasi, dan seeding.
-
-## Struktur folder (inti)
-
-File utama di root:
-- `run.py` — entrypoint aplikasi lokal
-- `migrate.py` — script migrasi sederhana (menciptakan/mereset tabel)
-- `seed.py` — script untuk mengisi data awal (users, floors, spaces, amenities, bookings, blackouts)
-
-Direktori `src/` (kode sumber):
-- `src/app.py` — application factory, inisialisasi Flask dan blueprint
-- `src/config/` — konfigurasi & `database.py` (instance SQLAlchemy)
-- `src/routes/` — definisi endpoint Flask (meneruskan ke controller)
-- `src/controllers/` — menangani request, memanggil usecase, memformat response
-- `src/usecases/` — logika bisnis (mis. pemeriksaan availability, aturan booking)
-- `src/repositories/` — akses database via SQLAlchemy (dipisah untuk testabilitas)
-- `src/models/` — model SQLAlchemy (User, Department, Floor, Space, Amenity, Blackout, Booking)
-- `src/utils/` — helper (JWT helper, response template, error handlers)
-
-Contoh file penting:
-- `src/routes/space_routes.py`
-- `src/controllers/space_controller.py`
-- `src/usecases/space_usecase.py` (logika ketersediaan)
-- `src/repositories/space_repository.py`
-
-## Alur data (request → response)
-
-1. Client mengirim HTTP request (mis. `GET /api/spaces`).
-2. Route di `src/routes` menerima request dan mem-forward ke controller.
-3. Controller mem-parse dan memvalidasi parameter/body lalu memanggil UseCase.
-4. UseCase menjalankan aturan bisnis dan memanggil repository untuk mengambil/menyimpan data.
-5. Repository melakukan query ke database melalui model SQLAlchemy.
-6. Model mengembalikan objek ke UseCase.
-7. UseCase membentuk hasil domain (mis. menghitung `available_hours`) dan mengembalikan ke controller.
-8. Controller membungkus hasil menggunakan `ResponseTemplate` dan mengembalikan HTTP response ke client.
-
-Pisahan tanggung jawab ini membuat controller tipis, usecase berfokus pada logika bisnis, dan repository mengurus akses data.
-
-## Logika ketersediaan ruang (ringkas)
-
-Query yang biasanya dipakai client:
-- `date` — format YYYY-MM-DD
-- `start_time`, `end_time` — format HH:MM (24 jam)
-
-Langkah ketika date dan time diberikan:
-1. UseCase mem-parse dan memvalidasi format `date`, `start_time`, `end_time`.
-2. Ambil seluruh booking relevan untuk setiap space pada tanggal tersebut (kecualikan booking yang cancelled bila perlu).
-3. Periksa `opening_hours` masing-masing space (disimpan sebagai JSON per-hari) — jika tutup maka tidak tersedia.
-4. Terapkan `buffer_min` di sekitar setiap booking (baik dari snapshot booking atau default space) sehingga interval terpakai melebar ke depan/ke belakang.
-5. Gabungkan interval yang saling tumpang tindih lalu hitung celah (gaps) antara jam buka dan jam tutup setelah mengeluarkan interval terpakai.
-6. Hasil celah tersebut adalah `available_hours` (array object {start: "HH:MM", end: "HH:MM"]).
-7. Jika `available_hours` kosong untuk tanggal yang diminta, space dianggap TIDAK tersedia; saat client memakai filter tanggal/waktu, space yang tidak tersedia tidak akan dikirimkan.
-
-Perilaku penting:
-- Jika client tidak mengirim `date`, server mengembalikan semua spaces tanpa keterangan `available_hours`.
-- Jika `date` dikirim, response menyertakan `available_hours` dan `is_available` bila relevan.
-- Space tanpa jam tersedia (array kosong) akan di-skip pada hasil ketika filter tanggal/waktu dipakai.
-
-## Contoh endpoint & format
-
-- POST `/api/login` — body: {"username":"...","password":"..."} → mengembalikan JWT
-- POST `/api/register` — membuat user (password di-hash dengan bcrypt)
-- GET `/api/spaces` — optional query params: `date`, `start_time`, `end_time`
-
-Contoh:
-`GET /api/spaces?date=2025-01-05&start_time=09:00&end_time=10:00`
-
-Contoh response (disingkat):
-
-```
-{
-  "status": "success",
-  "data": [
-    {
-      "id": 4,
-      "name": "Ruang Semeru",
-      "location": "Lantai 12",
-      "is_available": true,
-      "available_hours": [ {"start":"08:00","end":"12:00"}, {"start":"14:00","end":"18:00"} ],
-      ...
-    }
-  ]
-}
-```
-
-Hanya spaces yang memiliki slot tersedia untuk filter yang dikirim akan dikembalikan.
-
-## Cara menjalankan lokal (PowerShell)
-
-1. Buat virtual environment dan install dependency:
-
-```powershell
-python -m venv venv
-venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-2. Konfigurasi koneksi database di `src/config/config.py` (contoh: `mysql+pymysql://user:pass@host/dbname`).
-
-3. Jalankan migrasi (script sederhana yang recreate tabel):
-
-```powershell
-python migrate.py
-```
-
-4. Seed data awal:
-
-```powershell
-python seed.py
-```
-
-5. Jalankan server:
-
-```powershell
-python run.py
-```
-
-Default server: `0.0.0.0:5000` (bisa diubah di `run.py`).
-
-## Catatan: foreign key sirkular (users ↔ departments)
-
-Ada relasi sirkular:
-- `users.department_id` → `departments.id`
-- `departments.manager_id` → `users.id`
-
-Beberapa GUI database dapat menampilkan tabel `users` sebagai read-only karena relasi sirkular ini. Namun perubahan tetap bisa dilakukan melalui API atau SQL.
-
-Cara aman mengubah data user:
-- Lewat API aplikasi (direkomendasikan).
-- Atau langsung SQL (hati‑hati):
-
-```sql
-SET FOREIGN_KEY_CHECKS = 0;
-UPDATE users SET email = 'baru@company.com' WHERE id = 1;
-SET FOREIGN_KEY_CHECKS = 1;
-```
-
-Jika ingin menghindari masalah GUI, opsi jangka panjang: hapus FK sirkular dan tangani konsistensi lewat aplikasi, atau gunakan desain referensi terpisah.
-
-## Rekomendasi & langkah berikutnya
-
-- Tambah dokumentasi OpenAPI / Swagger untuk contract API.
-- Tambah unit test untuk logika `available_hours` (happy path + edge cases seperti overlap buffer, blackout).
-- Tambah endpoint CRUD untuk Spaces/Bookings agar pengelolaan data tidak perlu akses DB langsung.
+A complete backend for an office space booking platform -- manage hot desks, meeting rooms, and private rooms across multi-floor buildings with real-time updates, role-based access control, and a check-in/check-out workflow.
 
 ---
 
-Jika Anda mau, saya bisa lanjut membuat OpenAPI spec otomatis atau menambahkan endpoint CRUD untuk manajemen user/space.
-## openBO - Backend
+## Table of Contents
 
-Backend for the openBO booking system (Flask + MariaDB) — small, clean-architecture project with routes, controllers, use cases, repositories and models.
-
-## Quick overview
-
-- Language: Python (Flask)
-- Database: MariaDB (mysql+pymysql)
-- ORM: SQLAlchemy
-- Auth: JWT (PyJWT) + bcrypt password hashing
-- Architecture: Clean Architecture (Routes → Controllers → UseCases → Repositories → Models)
-
-This README documents the folder structure, the request → response data flow, and how key features (availability logic, seeding, migrations) work.
-
-## Folder structure
-
-Root files:
-- `run.py` — application entrypoint for local development
-- `migrate.py` — simple migration script (creates/drops tables)
-- `seed.py` — seeds initial data (users, floors, spaces, amenities, bookings, blackouts)
-
-Key source tree (`src/`):
-
-- `src/app.py` — application factory, Flask app creation and blueprint registration
-- `src/config/` — configuration and `database.py` (SQLAlchemy db instance)
-- `src/routes/` — Flask route definitions (thin wrappers that call controllers)
-- `src/controllers/` — controllers that parse request data, call usecases, and prepare responses
-- `src/usecases/` — business logic (availability checks, booking rules, validation)
-- `src/repositories/` — DB access (queries), isolated for testability
-- `src/models/` — SQLAlchemy models (User, Department, Floor, Space, Amenity, Blackout, Booking)
-- `src/utils/` — helpers (JWT encoding/decoding, response templates, error handlers)
-
-Example files you will see:
-- `src/routes/space_routes.py`
-- `src/controllers/space_controller.py`
-- `src/usecases/space_usecase.py` (availability logic)
-- `src/repositories/space_repository.py`
-
-## Data flow (high level)
-
-1. Client makes HTTP request to an endpoint (e.g., `GET /api/spaces`)
-2. Route handler in `src/routes` receives the request and forwards it to a controller
-3. Controller (in `src/controllers`) extracts and validates query params/payload, then calls a UseCase
-4. UseCase (in `src/usecases`) contains business rules and orchestrates repository calls to fetch/persist data
-5. Repositories (in `src/repositories`) perform SQLAlchemy queries against models
-6. Models (in `src/models`) map to DB tables; repositories return model instances to usecases
-7. UseCase formats the domain result and returns to Controller
-8. Controller wraps the result with `ResponseTemplate` and returns HTTP response
-
-This separation keeps controllers thin, usecases focused on rules, and repositories responsible for DB access.
-
-## Availability & booking logic (how it is processed)
-
-- Request parameters for availability (spaces endpoint):
-  - `date` — YYYY-MM-DD
-  - `start_time`, `end_time` — HH:MM (24h)
-
-- When client provides date and times, the UseCase will:
-  1. Parse and validate `date`, `start_time`, `end_time`.
-  2. For each space, load bookings for that date (excluding cancelled as appropriate).
-  3. Consider `opening_hours` (stored per-space as JSON) to determine whether the date is open.
-  4. Apply `buffer_min` (snapshot at booking time or space default) around bookings to compute true occupied intervals.
-  5. Compute `available_hours` as gaps between opening and closing times after excluding occupied intervals.
-  6. If `available_hours` is empty for that date, the space is considered NOT available; when filters were provided, such spaces are skipped from the response.
-
-- Important behaviors implemented:
-  - If no `date` provided, response returns all spaces (no availability filtering).
-  - If `date` provided, response includes `available_hours` (array of {start: "HH:MM", end: "HH:MM"}) and `is_available` when relevant.
-  - If `available_hours` is empty for a space on the requested date, the space will not be included in the filtered response (client requested a time window but the space has no free periods).
-
-## Common endpoints (examples)
-
-- POST /api/login — body:{"username":"...","password":"..."} → returns JWT
-- POST /api/register — simple user creation (password hashed with bcrypt)
-- GET /api/spaces — query params optional `date`, `start_time`, `end_time`
-
-GET /api/spaces example (filter availability):
-
-`GET /api/spaces?date=2025-01-05&start_time=09:00&end_time=10:00`
-
-Response:
-
-```
-{
-  "status": "success",
-  "data": [
-    {
-      "id": 4,
-      "name": "Ruang Semeru",
-      "location": "Lantai 12",
-      "is_available": true,
-      "available_hours": [ {"start":"08:00","end":"12:00"}, {"start":"14:00","end":"18:00"} ],
-      ...
-    }
-    // other spaces that are available for the requested date/time
-  ]
-}
-```
-
-Note: spaces that do not have any available_hours for that date are not returned when client supplies date/time filters.
-
-## How to run locally
-
-1. Create a virtualenv and install requirements
-
-```powershell
-python -m venv venv
-venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-2. Configure `src/config/config.py` with your MariaDB connection string (e.g., `mysql+pymysql://user:pass@host/dbname`).
-
-3. Run migrations (this project uses a small `migrate.py` script that recreates tables):
-
-```powershell
-python migrate.py
-```
-
-4. Seed initial data (creates users, floors, spaces, amenities, bookings):
-
-```powershell
-python seed.py
-```
-
-5. Start the app:
-
-```powershell
-python run.py
-```
-
-Server will listen on 0.0.0.0:5000 by default (configurable in `run.py`).
-
-## Editing users & circular FK note
-
-There is a circular foreign-key relationship between `users.department_id` and `departments.manager_id`. Some DB GUIs may show `users` as read-only because of that circular reference. Edit users safely via:
-
-- The application/API (preferred): use endpoints to update users
-- Direct SQL: temporarily disable foreign key checks:
-
-```sql
-SET FOREIGN_KEY_CHECKS = 0;
-UPDATE users SET email = 'new@company.com' WHERE id = 1;
-SET FOREIGN_KEY_CHECKS = 1;
-```
-
-## Notes & future work
-
-- Consider adding CRUD endpoints for spaces/bookings for easier management.
-- Add unit tests around the availability calculation (happy path + edge cases: bookings touching buffer windows, blackout days).
-- If you plan to use GUI DB tools often, consider removing the circular FK (store manager_id nullable and assign via app-level checks) or use deferred constraints if supported.
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Clean Architecture Layers](#clean-architecture-layers)
+- [Request Lifecycle](#request-lifecycle)
+- [Data Model](#data-model)
+- [Entity-Relationship Diagram](#entity-relationship-diagram)
+- [API Endpoints](#api-endpoints)
+- [WebSocket Events](#websocket-events)
+- [Authentication & Authorization](#authentication--authorization)
+- [Response Format](#response-format)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Seed Data](#seed-data)
 
 ---
-
-If you'd like, I can also add API docs or OpenAPI spec next. 
-# OpenBO Backend
-
-A Flask-based REST API backend with MariaDB database integration using Clean Architecture.
 
 ## Features
 
-- Flask web framework
-- MariaDB database integration
-- SQLAlchemy ORM
-- CORS enabled
-- Environment-based configuration
-- Clean Architecture (Routes → Controllers → UseCases → Repositories → Models)
-- **JWT Authentication with Bearer token**
-- **Password Hashing (bcrypt)**
-- **User Management with Roles (employee, admin, manager)**
-- **Space Management with availability checking**
-- **Booking System with checkin/checkout**
-- **Statistics for employees (today bookings, upcoming bookings, weekly hours, favorite space)**
-- **Standardized API responses**
-- **Global error handling**
+- **Space Booking Engine** -- Book hot desks, meeting rooms, and private rooms with smart availability calculation (per-day opening hours, blackout dates, conflict detection)
+- **Check-in / Check-out Workflow** -- Each booking generates a unique check-in code (`CHK-XXXXXXXX`) valid for the booking day; status flows through `active -> checkin -> finished` or `active -> cancelled`
+- **Role-Based Access Control** -- Three roles (`employee`, `manager`, `superadmin`) with fine-grained permissions at the route level
+- **Department-Scoped Management** -- Managers can only manage users, announcements, assignments, and tasks within their own department
+- **Real-Time Updates** -- Socket.IO with three namespaces for live announcements, space availability, and booking changes
+- **Announcements** -- Company-wide or department-targeted announcements from managers
+- **Assignment & Task Management** -- Lightweight project management: assignments with tasks, priorities, and completion tracking
+- **Blackout Dates** -- System-wide blocked periods (holidays, maintenance) that prevent all bookings
+- **Statistics Dashboard** -- Weekly booking hours, favorite space, announcement count, and to-do list data per user
 
-## Prerequisites
+---
 
-- Python 3.8 or higher
-- MariaDB/MySQL server installed and running
+## Tech Stack
 
-## Installation
+| Component | Technology |
+|---|---|
+| Language | Python 3.13 |
+| Framework | Flask 3.0 |
+| Database | MariaDB 11.2 |
+| ORM | Flask-SQLAlchemy 3.1 |
+| Auth | PyJWT 2.8 (HS256) + bcrypt 4.1 |
+| Real-time | Flask-SocketIO 5.3 (threading mode) |
+| CORS | Flask-CORS 4.0 |
+| Containerization | Docker + Docker Compose 3.8 |
+| Reverse Proxy | Nginx |
 
-1. **Create a virtual environment:**
-   ```powershell
-   python -m venv venv
-   ```
+---
 
-2. **Activate the virtual environment:**
-   ```powershell
-   .\venv\Scripts\Activate.ps1
-   ```
+## Architecture
 
-3. **Install dependencies:**
-   ```powershell
-   pip install -r requirements.txt
-   ```
+### Clean Architecture Layers
 
-4. **Configure environment variables:**
-   - Copy `.env.example` to `.env`
-   - Update the database credentials in `.env` file
+The project follows **Clean Architecture** principles with strict separation of concerns across five layers. Each layer only depends on the layer below it.
 
-5. **Create the database:**
-   ```sql
-   CREATE DATABASE openbo_db;
-   ```
+```mermaid
+graph LR
+    Client(["Client"])
 
-6. **Run migrations:**
-   ```powershell
-   python migrate.py
-   ```
+    subgraph Flask Application
+        direction LR
+        Routes["Routes\nFlask Blueprints\nURL mapping\nAuth decorators"]
+        Controllers["Controllers\nRequest Handlers\nParse params/body\nFormat response"]
+        UseCases["Use Cases\nBusiness Logic\nValidation rules\nAvailability engine"]
+        Repositories["Repositories\nData Access\nSQLAlchemy queries\nCRUD operations"]
+        Models["Models\nORM Entities\nTable definitions\nRelationships"]
+    end
 
-7. **Seed initial data:**
-   ```powershell
-   python seed.py
-   ```
+    DB[(MariaDB)]
 
-## Running the Application
+    Client -->|"HTTP / WebSocket"| Routes
+    Routes -->|"@token_required\n@role_required"| Controllers
+    Controllers --> UseCases
+    UseCases --> Repositories
+    Repositories --> Models
+    Models --> DB
 
-### Option 1: Local Development
-
-1. Make sure MariaDB is running
-2. Activate the virtual environment (if not already activated)
-3. Run the Flask application:
-   ```powershell
-   python run.py
-   ```
-
-The server will start at `http://localhost:5000`
-
-### Option 2: Docker (Recommended)
-
-See [DOCKER.md](DOCKER.md) for detailed Docker setup guide.
-
-**Quick Start:**
-
-```powershell
-# Build and start all services (Flask + MariaDB)
-docker-compose up --build
-
-# Or run in background
-docker-compose up -d --build
+    style Client fill:#4A90D9,stroke:#333,color:#fff
+    style Routes fill:#6C5CE7,stroke:#333,color:#fff
+    style Controllers fill:#00B894,stroke:#333,color:#fff
+    style UseCases fill:#FDCB6E,stroke:#333,color:#333
+    style Repositories fill:#E17055,stroke:#333,color:#fff
+    style Models fill:#636E72,stroke:#333,color:#fff
+    style DB fill:#2D3436,stroke:#333,color:#fff
 ```
 
-**Access:**
-- API: http://localhost:5000
-- Database: localhost:3306
+| Layer | Directory | Responsibility |
+|---|---|---|
+| **Routes** | `src/routes/` | Map URLs to controllers, apply auth decorators |
+| **Controllers** | `src/controllers/` | Parse request parameters and body, call use cases, wrap results with `ResponseTemplate` |
+| **Use Cases** | `src/usecases/` | Business logic -- availability calculation, booking validation, role-based authorization rules |
+| **Repositories** | `src/repositories/` | Database access via SQLAlchemy -- abstracted queries behind static methods |
+| **Models** | `src/models/` | SQLAlchemy ORM models mapping to MariaDB tables |
 
-**Stop:**
-```powershell
-docker-compose down
+### Request Lifecycle
+
+A typical API request flows through all five layers and back:
+
+```mermaid
+sequenceDiagram
+    actor Client
+    participant R as Route (Blueprint)
+    participant A as Auth (JWT Decorator)
+    participant C as Controller
+    participant U as UseCase
+    participant Repo as Repository
+    participant DB as MariaDB
+
+    Client->>R: HTTP Request (POST /api/bookings)
+    R->>A: @token_required
+    A->>A: Validate JWT token
+    alt Invalid Token
+        A-->>Client: 401 Unauthorized
+    end
+    A->>R: request.current_user set
+    R->>C: call controller method
+    C->>C: Parse request body/params
+    C->>U: call use case
+    U->>U: Business validation (blackouts, hours, conflicts)
+    U->>Repo: query / persist data
+    Repo->>DB: SQL via SQLAlchemy
+    DB-->>Repo: Result rows
+    Repo-->>U: Model objects
+    U-->>C: success/data dict
+    C-->>Client: ResponseTemplate JSON response
 ```
 
-For more Docker commands and troubleshooting, see [DOCKER.md](DOCKER.md).
+---
 
-### Option 3: Coolify Deployment (Production)
+## Data Model
 
-See [COOLIFY.md](COOLIFY.md) for detailed Coolify deployment guide.
+The system has **10 entities** with the following relationships:
 
-**Pre-deployment checklist:** [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
+### Entity-Relationship Diagram
 
-**Quick Deploy:**
-1. Connect Git repository to Coolify
-2. Set environment variables in Coolify UI
-3. Deploy
-4. Run migrations via Coolify shell
-5. Done!
+```mermaid
+erDiagram
+    USER {
+        int id PK
+        string username UK
+        string email UK
+        string password_hash
+        string phone
+        string role
+        int department_id FK
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
 
-For complete guide, see [COOLIFY.md](COOLIFY.md).
+    DEPARTMENT {
+        int id PK
+        string name UK
+        text description
+        int manager_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    FLOOR {
+        int id PK
+        string name
+        datetime created_at
+        datetime updated_at
+    }
+
+    SPACE {
+        int id PK
+        string name
+        string type
+        int capacity
+        int location FK
+        json opening_hours
+        int max_duration
+        string status
+        datetime created_at
+        datetime updated_at
+    }
+
+    AMENITY {
+        int id PK
+        int space_id FK
+        string name
+        string icon
+        datetime created_at
+        datetime updated_at
+    }
+
+    BOOKING {
+        int id PK
+        int user_id FK
+        int space_id FK
+        string status
+        datetime start_at
+        datetime end_at
+        int max_duration_snapshot
+        string checkin_code UK
+        datetime code_valid_from
+        datetime code_valid_to
+        datetime checkin_at
+        datetime checkout_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    BLACKOUT {
+        int id PK
+        string title
+        text description
+        datetime start_at
+        datetime end_at
+        int created_by FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    ANNOUNCEMENT {
+        int id PK
+        string title
+        text description
+        int created_by FK
+        int department_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    ASSIGNMENT {
+        int id PK
+        string title
+        text description
+        int created_by FK
+        int department_id FK
+        datetime due_date
+        datetime created_at
+        datetime updated_at
+    }
+
+    TASK {
+        int id PK
+        string title
+        string priority
+        int assignment_id FK
+        int user_id FK
+        boolean is_done
+        datetime created_at
+        datetime updated_at
+    }
+
+    DEPARTMENT ||--o{ USER : "has members"
+    DEPARTMENT ||--o| USER : "managed by"
+    FLOOR ||--o{ SPACE : "contains"
+    SPACE ||--o{ AMENITY : "has"
+    SPACE ||--o{ BOOKING : "booked as"
+    USER ||--o{ BOOKING : "books"
+    USER ||--o{ BLACKOUT : "creates"
+    USER ||--o{ ANNOUNCEMENT : "authors"
+    DEPARTMENT ||--o{ ANNOUNCEMENT : "targets"
+    DEPARTMENT ||--o{ ASSIGNMENT : "owns"
+    USER ||--o{ ASSIGNMENT : "creates"
+    ASSIGNMENT ||--o{ TASK : "contains"
+    USER ||--o{ TASK : "assigned to"
+```
+
+> **Note:** `USER` and `DEPARTMENT` have a circular foreign key -- `users.department_id -> departments.id` and `departments.manager_id -> users.id` -- resolved with SQLAlchemy's `use_alter` and `post_update=True`.
+
+---
 
 ## API Endpoints
 
-### Authentication
-- **POST** `/api/auth/login`
-  - Login with username and password
-  - Body: `{ username: string, password: string }`
-  - Response: `{ success: true, data: { user: {...}, access_token: string, token_type: "Bearer" } }`
+All endpoints are prefixed with `/api`. Authenticated routes require `Authorization: Bearer <token>` header.
 
-- **POST** `/api/auth/register`
-  - Register new user
-  - Body: `{ username, email, password, phone?, role?, department_id? }`
-  - Response: `{ success: true, data: {...} }`
+### Health
 
-- **GET** `/api/auth/me` (Protected)
-  - Get current user info
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: {...} }`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/health` | -- | Server health check |
 
-### Health Check
-- **GET** `/api/health`
-  - Returns server status
+### Auth
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/login` | -- | Login with username and password, returns JWT |
+| `POST` | `/api/auth/register` | -- | Register a new user account |
+| `GET` | `/api/auth/me` | Token | Get current authenticated user profile |
 
 ### Users
-- **GET** `/api/users`
-  - Get all users
-  - Response: `{ success: true, data: [...], count: number }`
 
-- **GET** `/api/users/:id`
-  - Get user by ID
-  - Response: `{ success: true, data: {...} }`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/users` | Superadmin | List all users |
+| `GET` | `/api/users/:id` | Superadmin | Get user by ID |
+| `POST` | `/api/users` | Superadmin | Create a user (any role) |
+| `PUT` | `/api/users/:id` | Superadmin | Update a user |
+| `DELETE` | `/api/users/:id` | Superadmin | Delete a user (cannot delete self) |
+| `GET` | `/api/users/department/my-team` | Manager | List users in own department |
+| `POST` | `/api/users/department/my-team` | Manager | Create employee in own department |
+| `PUT` | `/api/users/department/my-team/:id` | Manager | Update employee in own department |
+| `DELETE` | `/api/users/department/my-team/:id` | Manager | Delete employee from own department |
 
-- **POST** `/api/users`
-  - Create a new user
-  - Body: `{ name: string, email: string }`
-  - Response: `{ success: true, data: {...} }`
+### Departments
 
-- **PUT** `/api/users/:id`
-  - Update user
-  - Body: `{ name: string, email: string }`
-  - Response: `{ success: true, data: {...} }`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/departments` | Superadmin | List all departments |
+| `GET` | `/api/departments/:id` | Superadmin | Get department by ID |
+| `POST` | `/api/departments` | Superadmin | Create department |
+| `PUT` | `/api/departments/:id` | Superadmin | Update department |
+| `DELETE` | `/api/departments/:id` | Superadmin | Delete department (must be empty) |
 
-- **DELETE** `/api/users/:id`
-  - Delete user
-  - Response: `{ success: true, message: string }`
+### Floors
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/floors` | Superadmin | List all floors |
+| `GET` | `/api/floors/:id` | Superadmin | Get floor by ID |
+| `POST` | `/api/floors` | Superadmin | Create floor |
+| `PUT` | `/api/floors/:id` | Superadmin | Update floor |
+| `DELETE` | `/api/floors/:id` | Superadmin | Delete floor (must have no spaces) |
 
 ### Spaces
-#### User Endpoints (Protected - Employee, Admin, Manager)
-- **GET** `/api/spaces` (Protected)
-  - Get all spaces with optional availability filter
-  - Headers: `Authorization: Bearer <token>`
-  - Query params: `date` (YYYY-MM-DD), `start_time` (HH:MM), `end_time` (HH:MM)
-  - Response: `{ success: true, data: [...], message: "...", status_code: 200 }`
-  - Space includes: `id`, `name`, `type`, `capacity`, `location`, `opening_hours`, `max_duration`, `status`, `amenities`, `is_available`, `available_hours`
-  - Availability logic:
-    - Without `date`: Returns all spaces without availability info
-    - With `date` only: Returns spaces with `available_hours` for that day
-    - With `date`, `start_time`, `end_time`: Returns only available spaces for that time slot
-    - Checks: Opening hours, blackout dates, existing bookings, time conflicts
 
-- **GET** `/api/spaces/:id` (Protected)
-  - Get space by ID with detailed information
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: {...} }`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/spaces` | Token | List all spaces (optional `date`, `start_time`, `end_time` filters) |
+| `GET` | `/api/spaces/:id` | Token | Get space details with amenities |
+| `GET` | `/api/spaces/manage` | Superadmin | List all spaces for admin management |
+| `GET` | `/api/spaces/manage/:id` | Superadmin | Get space for admin management |
+| `PUT` | `/api/spaces/manage/:id` | Superadmin | Update space status |
 
-#### Management Endpoints (Protected - Superadmin Only)
-- **GET** `/api/spaces/manage` (Superadmin)
-  - Get all spaces for management
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: [...], message: "...", status_code: 200 }`
-  - Returns all spaces with floor and amenity details
+### Amenities
 
-- **GET** `/api/spaces/manage/:id` (Superadmin)
-  - Get space by ID for management
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: {...} }`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/amenities` | Superadmin | List all amenities |
+| `GET` | `/api/amenities/:id` | Superadmin | Get amenity by ID |
+| `POST` | `/api/amenities` | Superadmin | Create amenity |
+| `PUT` | `/api/amenities/:id` | Superadmin | Update amenity |
+| `DELETE` | `/api/amenities/:id` | Superadmin | Delete amenity |
 
-- **PUT** `/api/spaces/manage/:id` (Superadmin)
-  - Update space status only
-  - Headers: `Authorization: Bearer <token>`
-  - Body: `{ status: "available" | "booked" | "in_maintenance" }`
-  - Response: `{ success: true, data: {...}, message: "Status space berhasil diupdate", status_code: 200 }`
-  - Note: Superadmin can only change space status. Space creation/deletion is managed via seed data.
+### Blackouts
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/blackouts` | Superadmin | List all blackout periods |
+| `GET` | `/api/blackouts/:id` | Superadmin | Get blackout by ID |
+| `POST` | `/api/blackouts` | Superadmin | Create blackout period |
+| `PUT` | `/api/blackouts/:id` | Superadmin | Update blackout period |
+| `DELETE` | `/api/blackouts/:id` | Superadmin | Delete blackout period |
 
 ### Bookings
-#### User Endpoints (Protected - Employee, Admin, Manager)
-- **POST** `/api/bookings` (Protected)
-  - Create new booking
-  - Headers: `Authorization: Bearer <token>`
-  - Body: `{ user_id: number, space_id: number, start_at: "YYYY-MM-DD HH:MM:SS", end_at: "YYYY-MM-DD HH:MM:SS" }`
-  - Response: `{ success: true, data: {...}, message: "Booking berhasil dibuat", status_code: 201 }`
-  - Returns: booking with `checkin_code` (CHK-XXXXXXXX)
-  - Validation:
-    - Start time must be before end time
-    - Cannot book in the past
-    - Space must be available
-    - Checks blackout dates
-    - Checks opening hours
-    - Validates max duration
-    - Checks time conflicts with existing bookings
 
-- **GET** `/api/bookings/:id` (Protected)
-  - Get booking by ID
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: {...} }`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/bookings` | Token | Get current user's bookings |
+| `POST` | `/api/bookings` | Token | Create a new booking |
+| `GET` | `/api/bookings/:id` | Token | Get booking by ID |
+| `GET` | `/api/bookings/user/:user_id` | Token | Get bookings by user |
+| `PATCH` | `/api/bookings/:id` | Token | Update booking status (checkin with code, checkout, cancel) |
+| `GET` | `/api/bookings/manage` | Superadmin | List all bookings (admin) |
+| `GET` | `/api/bookings/manage/:id` | Superadmin | Get booking by ID (admin) |
+| `DELETE` | `/api/bookings/manage/:id` | Superadmin | Delete a booking |
 
-- **GET** `/api/bookings` (Protected)
-  - Get all bookings
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: [...] }`
+### Announcements
 
-- **GET** `/api/bookings/user/:user_id` (Protected)
-  - Get all bookings by user
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: [...] }`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/announcements` | Manager | Get company-wide + own department announcements |
+| `POST` | `/api/announcements` | Manager | Create announcement (own department or company-wide) |
+| `PUT` | `/api/announcements/:id` | Manager | Update announcement |
+| `DELETE` | `/api/announcements/:id` | Manager | Delete announcement (own department only) |
 
-- **PATCH** `/api/bookings/:id` (Protected)
-  - Update booking status (checkin, checkout, cancel)
-  - Headers: `Authorization: Bearer <token>`
-  - Body for **checkin**: `{ status: "checkin", checkin_code: "CHK-XXXXXXXX" }`
-    - Code must be valid (15 min before start_at to 15 min after end_at)
-    - Changes status from 'active' to 'checkin'
-    - Records checkin_at timestamp
-  - Body for **checkout**: `{ status: "checkout" }`
-    - Changes status from 'checkin' to 'finished'
-    - Records checkout_at timestamp
-  - Body for **cancel**: `{ status: "cancel" }`
-    - Changes status to 'cancelled'
-  - Response: `{ success: true, data: {...}, message: "...", status_code: 200 }`
+### Assignments
 
-#### Management Endpoints (Protected - Superadmin Only)
-- **GET** `/api/bookings/manage` (Superadmin)
-  - Get all bookings for management
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: [...], message: "...", status_code: 200 }`
-  - Returns bookings with user info (username, email) and floor info
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/assignments` | Manager | List assignments in own department |
+| `POST` | `/api/assignments` | Manager | Create assignment for own department |
+| `PUT` | `/api/assignments/:id` | Manager | Update assignment |
+| `DELETE` | `/api/assignments/:id` | Manager | Delete assignment (all tasks must be completed) |
 
-- **GET** `/api/bookings/manage/:id` (Superadmin)
-  - Get booking by ID for management
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, data: {...} }`
-  - Returns booking with user info and floor info
+### Tasks
 
-- **DELETE** `/api/bookings/manage/:id` (Superadmin)
-  - Delete booking (hard delete)
-  - Headers: `Authorization: Bearer <token>`
-  - Response: `{ success: true, message: "Booking berhasil dihapus", status_code: 200 }`
-  - Note: Superadmin can only delete bookings for cleanup purposes. Users own their booking lifecycle (create, checkin, checkout, cancel).
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/tasks/assignment/:id` | Manager | List tasks for an assignment |
+| `POST` | `/api/tasks/assignment/:id` | Manager | Create task (assign to department member) |
+| `PUT` | `/api/tasks/:id` | Manager / Employee | Manager: update all fields; Employee: toggle `is_done` on own tasks |
+| `DELETE` | `/api/tasks/:id` | Manager | Delete task (own department) |
 
-### Statistics (Protected)
-- **GET** `/api/stats_employee/:user_id` (Protected)
-  - Get employee statistics
-  - Headers: `Authorization: Bearer <token>`
-  - Response:
-    ```json
-    {
-      "success": true,
-      "data": {
-        "user_id": 1,
-        "today_bookings": 2,
-        "upcoming_bookings": 5,
-        "weekly_booking_hours": 8.5,
-        "favorite_space": {
-          "space_id": 3,
-          "space_name": "Meeting Room A",
-          "space_type": "meeting_room",
-          "booking_count": 10
-        }
-      }
-    }
-    ```
-  - Statistics details:
-    - `today_bookings`: Count of active and checkin bookings today
-    - `upcoming_bookings`: Count of bookings starting tomorrow or later
-    - `weekly_booking_hours`: Total hours from checkin to checkout this week
-    - `favorite_space`: Most booked space with booking count
+### Statistics
 
-## Database Schema
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/stats` | Token | Get user stats (announcements, weekly hours, favorite space, to-do list) |
 
-### Users Table
-- `id` - Integer (Primary Key, Auto Increment)
-- `username` - String(50, Unique, Nullable=False)
-- `email` - String(120, Unique, Nullable=False)
-- `password` - String(255, Nullable=False) - Hashed with bcrypt
-- `phone` - String(20)
-- `role` - String(20, Default='employee') - employee, admin, manager
-- `department_id` - Integer (Foreign Key to departments.id)
-- `created_at` - DateTime
-- `updated_at` - DateTime
+---
 
-### Departments Table
-- `id` - Integer (Primary Key)
-- `name` - String(100)
-- `manager_id` - Integer (Foreign Key to users.id)
-- `created_at` - DateTime
-- `updated_at` - DateTime
+## WebSocket Events
 
-### Floors Table
-- `id` - Integer (Primary Key)
-- `name` - String(50)
-- `level` - Integer
-- `created_at` - DateTime
-- `updated_at` - DateTime
+Real-time communication uses **Socket.IO** with three namespaces. All namespaces require authentication via an `authenticate` event with `{token}`.
 
-### Spaces Table
-- `id` - Integer (Primary Key)
-- `name` - String(100)
-- `type` - String(20) - hot_desk, private_room, meeting_room
-- `capacity` - Integer
-- `location` - Integer (Foreign Key to floors.id)
-- `opening_hours` - JSON - {mon: {start: "08:00", end: "18:00"}, ...}
-- `max_duration` - Integer (minutes)
-- `status` - String(20, Default='available') - available, booked, in_maintenance
-- `created_at` - DateTime
-- `updated_at` - DateTime
+### `/announcements`
 
-### Amenities Table
-- `id` - Integer (Primary Key)
-- `space_id` - Integer (Foreign Key to spaces.id)
-- `name` - String(50)
-- `icon` - String(50)
-- `created_at` - DateTime
-- `updated_at` - DateTime
+| Direction | Event | Description |
+|---|---|---|
+| Client -> Server | `authenticate` | Send `{token}` -- joins `global_announcements`; superadmins join all dept rooms; others join own dept room |
+| Server -> Client | `authenticated` | Confirmation with `user_id`, `role`, `subscribed_to` |
+| Server -> Client | `announcements_initial` | Initial announcement list on connect |
+| Server -> Client | `created` | New announcement broadcast |
+| Server -> Client | `updated` | Updated announcement broadcast |
+| Server -> Client | `deleted` | Deleted announcement `{id}` |
 
-### Blackout Dates Table
-- `id` - Integer (Primary Key)
-- `title` - String(100) - Holiday name
-- `start_at` - DateTime
-- `end_at` - DateTime
-- `created_at` - DateTime
-- `updated_at` - DateTime
+### `/spaces`
 
-### Bookings Table
-- `id` - Integer (Primary Key)
-- `user_id` - Integer (Foreign Key to users.id)
-- `space_id` - Integer (Foreign Key to spaces.id)
-- `status` - String(20, Default='active') - active, checkin, finished, cancelled
-- `start_at` - DateTime
-- `end_at` - DateTime
-- `max_duration_snapshot` - Integer
-- `checkin_code` - String(50, Unique) - CHK-XXXXXXXX
-- `code_valid_from` - DateTime - 15 min before start_at
-- `code_valid_to` - DateTime - 15 min after end_at
-- `checkin_at` - DateTime (Nullable)
-- `checkout_at` - DateTime (Nullable)
-- `created_at` - DateTime
-- `updated_at` - DateTime
+| Direction | Event | Description |
+|---|---|---|
+| Client -> Server | `authenticate` | Send `{token}` -- joins `spaces_updates` room |
+| Client -> Server | `get_spaces` | Send `{date?, start_time?, end_time?}` -- returns filtered spaces |
+| Server -> Client | `spaces_data` | Space list with `{spaces[], count, filters}` |
+| Server -> Client | `created` / `updated` / `deleted` | Space change broadcast |
+| Server -> Client | `availability_changed` | Booking-triggered availability update |
 
-## Project Structure (Clean Architecture)
+### `/bookings`
 
-```
-backend/
-├── src/
-│   ├── __init__.py
-│   ├── app.py                      # Application factory
-│   ├── config/
-│   │   ├── __init__.py
-│   │   ├── config.py               # Configuration settings
-│   │   └── database.py             # Database initialization
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── user.py                 # User model
-│   │   ├── department.py           # Department model
-│   │   ├── floor.py                # Floor model
-│   │   ├── space.py                # Space model
-│   │   ├── amenity.py              # Amenity model
-│   │   ├── blackout.py             # Blackout date model
-│   │   └── booking.py              # Booking model
-│   ├── repositories/
-│   │   ├── __init__.py
-│   │   ├── user_repository.py      # User data access layer
-│   │   ├── space_repository.py     # Space data access layer
-│   │   ├── booking_repository.py   # Booking data access layer
-│   │   └── stats_repository.py     # Statistics data access layer
-│   ├── usecases/
-│   │   ├── __init__.py
-│   │   ├── user_usecase.py         # User business logic
-│   │   ├── auth_usecase.py         # Authentication business logic
-│   │   ├── space_usecase.py        # Space availability logic
-│   │   ├── booking_usecase.py      # Booking business logic
-│   │   └── stats_usecase.py        # Statistics business logic
-│   ├── controllers/
-│   │   ├── __init__.py
-│   │   ├── user_controller.py      # User request handlers
-│   │   ├── auth_controller.py      # Auth request handlers
-│   │   ├── space_controller.py     # Space request handlers
-│   │   ├── booking_controller.py   # Booking request handlers
-│   │   ├── stats_controller.py     # Stats request handlers
-│   │   └── health_controller.py    # Health check handler
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── user_routes.py          # User endpoint definitions
-│   │   ├── auth_routes.py          # Auth endpoint definitions
-│   │   ├── space_routes.py         # Space endpoint definitions
-│   │   ├── booking_routes.py       # Booking endpoint definitions
-│   │   ├── stats_routes.py         # Statistics endpoint definitions
-│   │   └── health_routes.py        # Health check endpoint
-│   └── utils/
-│       ├── __init__.py
-│       ├── jwt_helper.py           # JWT token creation and validation
-│       ├── response_template.py    # Standardized API responses
-│       └── error_handlers.py       # Global error handlers
-├── run.py                          # Entry point
-├── migrate.py                      # Database migration script
-├── seed.py                         # Database seeding script
-├── requirements.txt                # Python dependencies
-├── .env                           # Environment variables
-├── .env.example                   # Example environment file
-└── README.md                      # This file
-```
+| Direction | Event | Description |
+|---|---|---|
+| Client -> Server | `authenticate` | Send `{token}` -- joins `user_{id}_bookings`; managers also join `department_{id}_bookings` |
+| Client -> Server | `get_bookings` | Send `{token}` -- returns user's bookings (managers see department bookings) |
+| Server -> Client | `bookings_data` | Booking list with `{bookings[], count}` |
+| Server -> Client | `created` / `updated` / `deleted` | Booking change broadcast |
 
-## Architecture Layers
+---
 
-### 1. **Routes** (Routing Layer)
-- Definisi endpoint dan HTTP methods
-- Mapping URL ke controller functions
-- Menggunakan Flask Blueprint
-- Authentication decorators (@token_required, @role_required)
+## Authentication & Authorization
 
-### 2. **Controllers** (Presentation Layer)
-- Menangani HTTP requests dan responses
-- Validasi input dasar
-- Memanggil UseCase untuk business logic
-- Format response menggunakan ResponseTemplate
-- Standardized responses: `{ success: bool, data: any, message: string, status_code: int }`
+### JWT Flow
 
-### 3. **UseCases** (Business Logic Layer)
-- Berisi business logic dan rules
-- Orchestrate flow data antara controllers dan repositories
-- Validasi business rules
-- Space availability checking
-- Booking conflict detection
-- Returns: `{ success: bool, data: any, error: string }`
+1. Client sends `POST /api/auth/login` with `{username, password}`
+2. Server validates credentials (bcrypt hash comparison), checks `is_active` flag
+3. Server returns a JWT token (HS256, **24-hour expiry**)
+4. Client includes `Authorization: Bearer <token>` in subsequent requests
+5. Token payload: `user_id`, `username`, `email`, `role`, `department_id`, `exp`, `iat`
 
-### 4. **Repositories** (Data Access Layer)
-- Menangani semua operasi database
-- Abstraksi untuk data persistence
-- CRUD operations
-- Consistent naming: get_by_id(), get_all_*(), create(), update(), delete()
+### Route Protection
 
-### 5. **Models** (Entity Layer)
-- Definisi struktur data
-- Database schema
-- Data transformation methods (to_dict())
-- Relationships between entities
+Two decorators are applied at the route level:
 
-## Key Features
+- **`@token_required`** -- Validates the Bearer token, injects `request.current_user` with user data from the JWT payload
+- **`@role_required(roles)`** -- Checks `request.current_user.role` against a list of allowed roles
 
-### Space Availability System
-The system implements comprehensive availability checking:
+### Role Permissions
 
-1. **Opening Hours Validation**
-   - Stored as JSON per space: `{mon: {start: "08:00", end: "18:00"}, ...}`
-   - Day-specific schedules (different hours for each day)
-   - Closed days handled (e.g., weekends)
+| Role | Capabilities |
+|---|---|
+| **Employee** | Book spaces, check-in/out, view own bookings and stats, mark own tasks as done |
+| **Manager** | All employee abilities + manage own department users, announcements, assignments, and tasks |
+| **Superadmin** | Full CRUD on users, departments, floors, spaces, amenities, blackouts; manage all bookings |
 
-2. **Blackout Dates**
-   - System-wide blackout dates (holidays, maintenance)
-   - Prevents bookings during blackout periods
+---
 
-3. **Conflict Detection**
-   - Checks existing bookings for time overlaps
-   - Direct time conflict check (no buffer)
-   - Prevents double-booking
+## Response Format
 
-4. **Available Hours Calculation**
-   - Computes free time slots within opening hours
-   - Excludes existing bookings
-   - Returns array of available time ranges: `[{start: "HH:MM", end: "HH:MM"}, ...]`
-
-### Booking Workflow
-
-1. **Creation**
-   - Validates time order (start < end)
-   - Checks not in the past
-   - Validates space availability
-   - Checks blackout dates
-   - Validates opening hours
-   - Checks max duration limit
-   - Detects conflicts
-   - Generates unique checkin code (CHK-XXXXXXXX)
-   - Sets code validity window (15 min before to 15 min after)
-
-2. **Check-in**
-   - Validates checkin code
-   - Checks code validity time window
-   - Changes status: active → checkin
-   - Records checkin_at timestamp
-
-3. **Checkout**
-   - Changes status: checkin → finished
-   - Records checkout_at timestamp
-
-4. **Cancellation**
-   - Changes status to cancelled
-   - Frees up the time slot
-
-### Role-Based Access Control
-
-- **Employee**: Can view spaces, create bookings, check-in/out, cancel own bookings
-- **Admin**: Same as employee (future: department management)
-- **Manager**: Same as employee (future: department oversight)
-- **Superadmin**: Limited management access via `/manage` endpoints:
-  - Spaces: View all, update status only
-  - Bookings: View all, delete only
-  - Users: Full CRUD
-  - Departments: Full CRUD
-
-### Management Endpoints
-
-Superadmin-only endpoints with limited administrative access:
-- `/api/spaces/manage/*` - View all spaces, update status only (available, booked, in_maintenance)
-- `/api/bookings/manage/*` - View all bookings, delete only (cleanup purposes)
-- Space creation/deletion managed via seed data
-- Users own their booking lifecycle (create, checkin, checkout, cancel)
-- Enhanced data with relationships (user info, floor info)
-
-## API Response Format
-
-All endpoints return standardized responses:
+All API responses follow a standardized JSON envelope:
 
 **Success:**
 ```json
 {
   "success": true,
-  "data": {...} or [...],
-  "message": "Operation completed successfully",
+  "data": { "..." },
+  "message": "Operation successful",
   "status_code": 200
 }
 ```
@@ -860,25 +488,141 @@ All endpoints return standardized responses:
 ```json
 {
   "success": false,
-  "error": "Error description",
-  "message": "User-friendly error message",
+  "message": "Error description",
   "status_code": 400
 }
 ```
 
-## Error Handling
+Global error handlers are registered for HTTP 400, 401, 403, 404, 405, 422, 500, SQLAlchemy errors, and unhandled exceptions.
 
-Global error handlers for:
-- 404 Not Found
-- 405 Method Not Allowed
-- 500 Internal Server Error
-- JWT Authentication Errors
-- Validation Errors
-- Database Errors
+---
 
-## Development
+## Getting Started
 
-The application runs in debug mode by default. For production, make sure to:
-- Set `SECRET_KEY` to a secure random value
-- Set `SQLALCHEMY_ECHO` to `False` in `config.py`
-- Use a production WSGI server (gunicorn, uWSGI, etc.)
+### Prerequisites
+
+- Python 3.13+
+- MariaDB 11.2+ (or MySQL 8+)
+- Docker and Docker Compose (optional)
+
+### Local Development
+
+```bash
+# Clone and enter project
+git clone <repo-url>
+cd backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate   # Linux/Mac
+venv\Scripts\activate      # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.docker .env
+# Edit .env with your database credentials:
+#   DB_HOST=localhost
+#   DB_PORT=3306
+#   DB_NAME=openbo
+#   DB_USER=root
+#   DB_PASSWORD=your_password
+#   JWT_SECRET_KEY=your_secret
+
+# Run migrations (creates/resets all tables)
+python migrate.py
+
+# Seed initial data
+python seed.py
+
+# Start development server
+python run.py
+# Server runs at http://localhost:5000
+```
+
+### Docker
+
+```bash
+# Build and start all services (MariaDB + Backend)
+docker-compose up --build
+
+# The compose file automatically runs:
+#   1. migrate.py  (create tables)
+#   2. seed.py     (insert demo data)
+#   3. run.py      (start server)
+```
+
+The Docker setup includes:
+- **MariaDB 11.2** on port 3306 with persistent volume
+- **Backend** on port 5000 with health check dependency on the database
+- **Production Dockerfile** with multi-stage build and HEALTHCHECK on `/api/health`
+- **Nginx config** for reverse proxy with WebSocket upgrade support
+
+---
+
+## Project Structure
+
+```
+backend/
+|-- run.py                        # Application entrypoint
+|-- migrate.py                    # Database migration (drop + recreate)
+|-- seed.py                       # Seed script (demo data)
+|-- requirements.txt              # Python dependencies
+|-- Dockerfile                    # Development Docker image
+|-- Dockerfile.production         # Multi-stage production image
+|-- docker-compose.yaml           # MariaDB + Backend orchestration
+|-- nginx.conf                    # Nginx reverse proxy config
+|
++-- src/
+    |-- app.py                    # Flask app factory, blueprint registration
+    |-- config/
+    |   |-- config.py             # App configuration (env vars)
+    |   |-- database.py           # SQLAlchemy instance
+    |   +-- socketio.py           # SocketIO instance
+    |-- routes/                   # Flask Blueprints (URL to Controller mapping)
+    |-- controllers/              # Request parsing, response formatting
+    |-- usecases/                 # Business logic layer
+    |-- repositories/             # Data access layer (SQLAlchemy queries)
+    |-- models/                   # ORM model definitions (10 entities)
+    |-- utils/
+    |   |-- jwt_helper.py         # @token_required, @role_required decorators
+    |   |-- response_template.py  # Standardized JSON response builder
+    |   +-- error_handlers.py     # Global HTTP error handlers
+    +-- websocket/
+        |-- announcement_socket.py  # /announcements namespace
+        |-- booking_socket.py       # /bookings namespace
+        +-- space_socket.py         # /spaces namespace
+```
+
+---
+
+## Seed Data
+
+Running `python seed.py` creates the following demo data:
+
+### Default Users
+
+| Username | Email | Password | Role | Department |
+|---|---|---|---|---|
+| `superadmin` | superadmin@company.com | `password` | Superadmin | Engineering |
+| `eng_manager` | eng.manager@company.com | `password` | Manager | Engineering |
+| `hr_manager` | hr.manager@company.com | `password` | Manager | People Ops |
+| `budi` | budi@company.com | `password` | Employee | Engineering |
+| `sari` | sari@company.com | `password` | Employee | People Ops |
+
+### Additional Seed Data
+
+- **2 Departments** -- Engineering, People Ops
+- **3 Floors** -- with descriptive names
+- **37 Spaces** -- hot desks, meeting rooms, and private rooms across all floors
+- **100+ Amenities** -- WiFi, monitors, AC, whiteboards, etc. linked to spaces
+- **3 Blackout Dates** -- sample holidays
+- **5 Announcements** -- company-wide and department-targeted
+- **3 Assignments** -- with **9 Tasks** across departments
+
+---
+
+## License
+
+This project is part of an Internet Technology course project.
