@@ -1,7 +1,4 @@
-/**
- * useBookings hooks
- * React Query hooks for booking operations
- */
+// Booking hooks for React Query
 
 'use client';
 
@@ -16,26 +13,21 @@ import {
   checkOutBooking,
 } from '@/services/bookingService';
 
-/**
- * Fetch user's bookings
- */
+// Fetch user's bookings
 export const useUserBookings = () => {
   return useQuery({
     queryKey: ['bookings', 'user'],
     queryFn: async () => {
-      // Get user from auth
       const { auth } = await import('@/lib/auth');
       const user = auth.getUser();
       if (!user?.id) return [];
       return getUserBookings(user.id);
     },
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 };
 
-/**
- * Fetch booking by ID
- */
+// Fetch booking by ID
 export const useBooking = (bookingId) => {
   return useQuery({
     queryKey: ['bookings', bookingId],
@@ -45,28 +37,20 @@ export const useBooking = (bookingId) => {
   });
 };
 
-/**
- * Create a new booking
- */
+// Create new booking
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: createBooking,
     onSuccess: (data) => {
-      console.log('✅ Booking created successfully, invalidating queries...', data);
-      // Invalidate and refetch bookings
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      // Invalidate all space queries (this will trigger refetch in useBookingSearch)
       queryClient.invalidateQueries({ queryKey: ['spaces'] });
-      console.log('✅ Queries invalidated, refetch should happen automatically');
     },
   });
 };
 
-/**
- * Update a booking
- */
+// Update booking
 export const useUpdateBooking = () => {
   const queryClient = useQueryClient();
 
@@ -79,9 +63,7 @@ export const useUpdateBooking = () => {
   });
 };
 
-/**
- * Cancel a booking
- */
+// Cancel booking
 export const useCancelBooking = () => {
   const queryClient = useQueryClient();
 
@@ -93,9 +75,7 @@ export const useCancelBooking = () => {
   });
 };
 
-/**
- * Check-in to a booking
- */
+// Check-in to booking
 export const useCheckInBooking = () => {
   const queryClient = useQueryClient();
 
@@ -107,9 +87,7 @@ export const useCheckInBooking = () => {
   });
 };
 
-/**
- * Check-out from a booking
- */
+// Check-out from booking
 export const useCheckOutBooking = () => {
   const queryClient = useQueryClient();
 

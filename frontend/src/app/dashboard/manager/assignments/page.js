@@ -46,7 +46,6 @@ export default function ManagerAssignmentsPage() {
                 setUsers(response.data || []);
             }
         } catch (error) {
-            console.error('Error fetching users:', error);
         }
     };
 
@@ -142,10 +141,8 @@ export default function ManagerAssignmentsPage() {
     };
 
     const fetchAssignmentTasks = async (assignmentId) => {
-        console.log('Fetching tasks for assignment:', assignmentId);
         try {
             const response = await getTasksByAssignment(assignmentId);
-            console.log('Tasks response:', response);
             if (response.success) {
                 setAssignmentTasks(prev => ({
                     ...prev,
@@ -153,7 +150,6 @@ export default function ManagerAssignmentsPage() {
                 }));
             }
         } catch (error) {
-            console.error('Error fetching tasks:', error);
             showToastMessage({
                 type: 'error',
                 title: 'Error',
@@ -164,19 +160,12 @@ export default function ManagerAssignmentsPage() {
     };
 
     const handleToggleExpand = (assignmentId) => {
-        console.log('Toggle expand for assignment:', assignmentId);
-        console.log('Current expanded ID:', expandedAssignmentId);
-        console.log('Current tasks cache:', assignmentTasks);
-        
         const newExpandedId = expandedAssignmentId === assignmentId ? null : assignmentId;
         setExpandedAssignmentId(newExpandedId);
         
         // Fetch tasks when expanding if not already loaded
         if (newExpandedId && !assignmentTasks[assignmentId]) {
-            console.log('Fetching tasks...');
             fetchAssignmentTasks(assignmentId);
-        } else {
-            console.log('Not fetching - either collapsing or tasks already loaded');
         }
     };
 

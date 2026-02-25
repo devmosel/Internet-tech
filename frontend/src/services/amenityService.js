@@ -1,9 +1,6 @@
 import { API_CONFIG, API_ENDPOINTS } from './config';
 
-/**
- * Get all amenities
- * @returns {Promise<Object>} API response with amenities data
- */
+// Get all amenities
 export const getAllAmenities = async () => {
   try {
     const token = localStorage.getItem('token');
@@ -20,7 +17,6 @@ export const getAllAmenities = async () => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching amenities:', error);
     throw error;
   }
 };

@@ -49,7 +49,6 @@ export default function UserDialog({ isOpen, onClose, mode = 'create', userData 
                     setDepartments(response.data);
                 }
             } catch (error) {
-                console.error('Error fetching departments:', error);
             }
         };
 
@@ -232,7 +231,6 @@ export default function UserDialog({ isOpen, onClose, mode = 'create', userData 
                 });
             }
         } catch (error) {
-            console.error('Form submission error:', error);
         } finally {
             setIsSubmitting(false);
         }

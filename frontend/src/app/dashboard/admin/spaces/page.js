@@ -27,7 +27,6 @@ export default function AdminSpacesPage() {
 
     // Subscribe to real-time space updates
     const handleSpaceUpdated = (space) => {
-      console.log('🔄 Real-time space updated:', space);
       setSpaces(prev => prev.map(s => s.id === space.id ? space : s));
       // Clear pending changes for this space if it was updated externally
       setPendingChanges(prev => {
@@ -38,12 +37,10 @@ export default function AdminSpacesPage() {
     };
 
     const handleSpaceCreated = (space) => {
-      console.log('✨ Real-time space created:', space);
       setSpaces(prev => [...prev, space]);
     };
 
     const handleSpaceDeleted = (data) => {
-      console.log('🗑️ Real-time space deleted:', data);
       const deleteId = data.id || data;
       setSpaces(prev => prev.filter(s => s.id !== deleteId));
       // Clear pending changes for deleted space
@@ -75,8 +72,6 @@ export default function AdminSpacesPage() {
         setSpaces(response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch spaces:', error);
-
       // Use mock data as fallback
       const mockSpaces = [
         { id: 1, name: 'Hot Desk A1', type: 'hot_desk', floor_name: 'Floor 1', capacity: 1, total_amenities: 6, status: 'available' },
@@ -217,7 +212,6 @@ export default function AdminSpacesPage() {
       // Clear pending changes
       setPendingChanges({});
     } catch (error) {
-      console.error('Error saving changes:', error);
       alert('Failed to save some changes. Please try again.');
     } finally {
       setIsSaving(false);

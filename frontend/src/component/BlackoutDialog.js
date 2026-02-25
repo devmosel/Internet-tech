@@ -172,7 +172,6 @@ export default function BlackoutDialog({ isOpen, onClose, mode = 'create', black
                 });
             }
         } catch (error) {
-            console.error('Form submission error:', error);
         } finally {
             setIsSubmitting(false);
         }

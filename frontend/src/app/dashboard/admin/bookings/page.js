@@ -109,12 +109,10 @@ export default function AdminBookingsPage() {
         if (response.success && response.data) {
           setBookings(response.data);
         } else {
-          console.error('Failed to fetch bookings:', response.message);
           // Fallback to mock data on error
           setBookings(mockBookings);
         }
       } catch (error) {
-        console.error('Error fetching bookings:', error);
         // Fallback to mock data on error
         setBookings(mockBookings);
       } finally {
@@ -209,7 +207,6 @@ export default function AdminBookingsPage() {
         setBookingToDelete(null);
       }
     } catch (error) {
-      console.error('Error deleting booking:', error);
       alert('Failed to delete booking. Please try again.');
     }
   };

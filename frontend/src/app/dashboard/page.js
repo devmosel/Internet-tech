@@ -13,7 +13,6 @@ import { Activity, Calendar, Clock, MapPin } from 'lucide-react';
 import { updateTask } from '@/services/taskService';
 import dynamic from 'next/dynamic';
 
-// Dynamically import Pomodoro to prevent SSR issues
 const PomodoroOverlay = dynamic(() => import('@/component/PomodoroOverlay'), { ssr: false });
 
 export default function DashboardPage() {
@@ -28,17 +27,14 @@ export default function DashboardPage() {
   const { data: response, isLoading: loading, error, refetch } = useDashboardStats();
   const stats = response?.data;
 
-  // Get real data from API with WebSocket for announcements
   const { announcements, isConnected: wsConnected, hasNewAnnouncement } = useAnnouncements(stats?.announcements || []);
   const todoTasks = (stats?.todo_list?.tasks || []).sort((a, b) => a.task_id - b.task_id);
   const incompleteTasks = todoTasks.filter(task => !task.is_done);
 
-  // Get user's bookings to check for active check-in
   const { data: bookingsResponse } = useUserBookings();
   const bookingsData = bookingsResponse?.data || [];
   const checkedInBooking = bookingsData.find(booking => booking.status === 'checkin');
 
-  // Handle task completion toggle
   const handleTaskToggle = async (task) => {
     try {
       await updateTask(task.task_id, {
@@ -55,7 +51,6 @@ export default function DashboardPage() {
         duration: 3000
       });
     } catch (error) {
-      console.error('Error toggling task:', error);
       showToastMessage({
         type: 'error',
         title: 'Error',
@@ -81,7 +76,6 @@ export default function DashboardPage() {
 
   // Helper function to format due date
   const formatDueDate = (dateString) => {
-    if (!dateString) return null;
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = date - now;
@@ -102,8 +96,6 @@ export default function DashboardPage() {
 
   // Helper function to get department color
   const getDepartmentColor = (departmentName) => {
-    if (!departmentName) return 'bg-gray-500';
-    
     const colors = {
       'HR': 'bg-blue-500',
       'IT': 'bg-cyan-500',
@@ -122,16 +114,13 @@ export default function DashboardPage() {
       return colors[departmentName];
     }
     
-    // Generate consistent color for unknown departments
-    const colorOptions = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-orange-500', 'bg-cyan-500'];
-    const index = departmentName.charCodeAt(0) % colorOptions.length;
-    return colorOptions[index];
+    // Fallback to gray
+    return 'bg-gray-500';
   };
 
   // Helper function to get announcement priority
   const getAnnouncementPriority = (index) => {
     if (index === 0) return 'high';
-    if (index <= 2) return 'medium';
     return 'low';
   };
 
@@ -152,7 +141,6 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <p className="text-gray-500 font-medium mb-1 pl-1">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
             <h1 className="text-4xl md:text-5xl font-black text-black tracking-tight" style={{ fontFamily: 'Tanker-Regular, sans-serif' }}>
               Good morning, <span className="text-gray-400 font-bold">{getUserDisplayName(user).split(' ')[0]}</span>
@@ -187,14 +175,7 @@ export default function DashboardPage() {
           {/* Left Column: Stats & Schedule (8/12) */}
           <div className="xl:col-span-8 flex flex-col gap-8">
 
-            {/* Announcements - Bulletin Board Style */}
             <div className="bg-[#D4A574] rounded-3xl p-8 border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
-              {/* Cork texture overlay */}
-              <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ 
-                backgroundImage: 'radial-gradient(circle at 20% 50%, transparent 0%, rgba(139, 90, 43, 0.3) 100%)',
-                mixBlendMode: 'multiply'
-              }} />
-              
               <div className="mb-6 relative z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -235,11 +216,9 @@ export default function DashboardPage() {
                             )}
                             <span className="text-[10px] font-bold text-gray-500 uppercase">{getRelativeTime(announcement.created_at)}</span>
                           </div>
-                          <h3 className="font-black text-base text-black leading-tight uppercase" style={{ fontFamily: 'Tanker-Regular, sans-serif' }}>{announcement.title}</h3>
-                          <p className="text-xs font-medium text-gray-700 leading-relaxed line-clamp-2">{announcement.description}</p>
-                          <div className="flex items-center mt-1">
-                            <span className="text-[10px] font-bold text-gray-500">by {announcement.creator_name}</span>
-                          </div>
+                          
+                          <h3 className="text-base font-bold text-black group-hover:underline">{announcement.title}</h3>
+                          <p className="text-sm text-gray-700 font-medium line-clamp-2">{announcement.message}</p>
                         </div>
                       </div>
                     );
@@ -268,7 +247,6 @@ export default function DashboardPage() {
                   <StatsCard
                     icon={<MapPin size={24} strokeWidth={3} />}
                     label="Go-To Space"
-                    value={stats?.favorite_space ? stats.favorite_space.space_name : 'Explore'}
                     description={stats?.favorite_space ? `Most visited (${stats.favorite_space.booking_count})` : 'Find your favorite spot'}
                     shadowColor="#F97316" // Orange
                   />
@@ -293,11 +271,11 @@ export default function DashboardPage() {
           <div className="xl:col-span-4 flex flex-col">
 
             {/* Today's Schedule - Notebook Style */}
-            <div className="bg-[#FFFDF5] rounded-[24px] border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 overflow-hidden flex flex-col relative px-8 py-10"
+            <div className="bg-white rounded-3xl p-6 border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 min-h-[700px] relative overflow-hidden"
               style={{
                 backgroundImage: `linear-gradient(#E5E7EB 1px, transparent 1px)`,
                 backgroundSize: '100% 32px',
-                backgroundPosition: '0 24px' // Align lines
+                backgroundPosition: '0 24px'
               }}>
 
               <div className="pl-6 relative z-10 flex-1 flex flex-col">
@@ -306,10 +284,10 @@ export default function DashboardPage() {
 
                 {loading ? (
                   <div className="flex flex-col gap-[64px]">
-                    {[1, 2, 3].map(i => <div key={i} className="h-8 bg-black/5 rounded-lg animate-pulse" />)}
+                    {[1, 2, 3].map(i => <div key={i} className="h-20 bg-gray-200 rounded-lg animate-pulse" />)}
                   </div>
-                ) : (todoTasks.length > 0 ? (
-                  <div className="flex flex-col">
+                ) : todoTasks.length > 0 ? (
+                  <div>
                     {/* Group tasks by assignment */}
                     {Object.entries(
                       todoTasks.reduce((groups, task) => {
@@ -326,29 +304,28 @@ export default function DashboardPage() {
                       const dueDateInfo = assignmentDueDate ? formatDueDate(assignmentDueDate) : null;
                       
                       return (
-                      <div key={assignmentTitle} className="mb-8">
-                        {/* Assignment Header */}
-                        <div className="flex items-start gap-2 mb-4">
-                          <div className="w-4 h-4 rounded-full bg-[#1a1a1a] shadow-inner flex-shrink-0 mt-1" style={{ marginLeft: '-16px' }} />
-                          <div className="flex-1">
-                            {dueDateInfo && (
-                              <span className="inline-block text-[10px] font-bold text-gray-600 mb-2 uppercase tracking-wider">
-                                Due {dueDateInfo.text}
-                              </span>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-base text-black">
-                                {assignmentTitle}
-                              </h3>
-                              <span className="text-xs font-bold bg-black text-white px-2 py-0.5 rounded-md">
-                                {tasks.length}
-                              </span>
+                        <div key={assignmentTitle} className="mb-8">
+                          {/* Assignment Header */}
+                          <div className="flex items-start gap-2 mb-4">
+                            <div className="flex-1">
+                              {dueDateInfo && (
+                                <span className="inline-block text-[10px] font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                                  Due {dueDateInfo.text}
+                                </span>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-base text-black">
+                                  {assignmentTitle}
+                                </h3>
+                                <span className="text-xs font-bold bg-black text-white px-2 py-0.5 rounded-md">
+                                  {tasks.length}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        
-                        {/* Tasks under this assignment */}
-                        <div className="flex flex-col pl-8">
+
+                          {/* Tasks for this assignment */}
+                          <div className="flex flex-col pl-8">
                           {tasks.map((task) => {
                             const priorityColor = task.task_priority === 'high' ? 'bg-red-400 border-red-600 text-white' : task.task_priority === 'medium' ? 'bg-yellow-300 border-yellow-500' : 'bg-gray-400 border-gray-600 text-white';
                             
@@ -372,8 +349,8 @@ export default function DashboardPage() {
                               </div>
                             );
                           })}
+                          </div>
                         </div>
-                      </div>
                       );
                     })}
                   </div>
@@ -386,7 +363,7 @@ export default function DashboardPage() {
                       Book a spot
                     </button>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 

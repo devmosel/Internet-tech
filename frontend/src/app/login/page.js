@@ -55,12 +55,9 @@ function LoginForm() {
       // Use the login service instead of direct fetch
       const data = await login(formData.username, formData.password);
       
-      console.log('Login successful, redirecting to:', redirectTo);
-      
       // Redirect to intended destination or dashboard
       window.location.href = redirectTo;
     } catch (err) {
-      console.error('Login error:', err);
       setError(err.message || 'Invalid username or password');
     } finally {
       setLoading(false);

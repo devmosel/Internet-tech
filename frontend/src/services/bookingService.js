@@ -1,15 +1,9 @@
-/**
- * Booking Service
- * Handles all booking-related API calls
- */
+// Booking service - create, read, update bookings
 
 import { API_CONFIG, API_ENDPOINTS } from './config';
 import { auth } from '@/lib/auth';
 
-/**
- * Get all bookings for admin management
- * @returns {Promise<Object>} API response with all bookings
- */
+// Get all bookings (admin)
 export const getAllBookingsForManage = async () => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.MANAGE_BOOKINGS}`, {
@@ -23,15 +17,10 @@ export const getAllBookingsForManage = async () => {
 
     return await response.json();
   } catch (error) {
-    console.error('Error fetching manage bookings:', error);
     throw error;
   }
 };
 
-/**
- * Get headers with authentication token
- * @returns {Object} Headers object with auth token if available
- */
 const getAuthHeaders = () => {
   const token = auth.getToken();
   const headers = { ...API_CONFIG.HEADERS };
@@ -47,36 +36,27 @@ const getAuthHeaders = () => {
  * Transform booking data from API format to UI format
  * @param {Object} booking - Booking data from API
  * @returns {Object} Transformed booking data
- */
-const transformBookingData = (booking) => {
-  // Map API status values to UI status values
-  const statusMap = {
-    'active': 'active',
-    'checkin': 'checkin',         // Keep as 'checkin' for blue badge
-    'checkout': 'finished',       // Map to 'finished' for gray badge
+ / Transform booking data from API to UI format
+const transformBookingData = (booking) => {inished' for gray badge
     'finished': 'finished',       // Keep as 'finished' for gray badge
     'completed': 'finished',      // Map to 'finished' for gray badge
+    'cancel': 'cancelled',
+    'cancelled': 'cancell
+    'checkout': 'finished',
+    'finished': 'finished',
+    'completed': 'finished',
     'cancel': 'cancelled',
     'cancelled': 'cancelled'
   };
 
-  // Determine the correct status based on booking state
   let mappedStatus;
 
-  // Priority 1: If checkout_at exists, booking is finished
   if (booking.checkout_at && booking.checkout_at !== null) {
     mappedStatus = 'finished';
   }
-  // Priority 2: If status is cancel/cancelled, keep it cancelled
   else if (booking.status?.toLowerCase() === 'cancel' || booking.status?.toLowerCase() === 'cancelled') {
     mappedStatus = 'cancelled';
   }
-  // Priority 3: Map other statuses normally
-  else {
-    mappedStatus = statusMap[booking.status?.toLowerCase()] || booking.status;
-  }
-
-  console.log('Transforming booking:', {
     id: booking.id,
     originalStatus: booking.status,
     checkout_at: booking.checkout_at,
@@ -92,7 +72,6 @@ const transformBookingData = (booking) => {
     date: booking.date,
     start_time: booking.start_time,
     end_time: booking.end_time,
-    checkin_code: booking.checkin_code,
     status: mappedStatus,
     checkin_at: booking.checkin_at,
     checkout_at: booking.checkout_at,
@@ -104,15 +83,7 @@ const transformBookingData = (booking) => {
   };
 };
 
-/**
- * Create a new booking
- * @param {Object} bookingData - Booking details
- * @param {string} bookingData.spaceId - Space ID to book
- * @param {string} bookingData.date - Booking date (YYYY-MM-DD)
- * @param {string} bookingData.startTime - Start time (HH:MM)
- * @param {string} bookingData.endTime - End time (HH:MM)
- * @returns {Promise<Object>} Created booking data
- */
+// Create new booking
 export const createBooking = async (bookingData) => {
   try {
     const response = await fetch(
@@ -134,23 +105,13 @@ export const createBooking = async (bookingData) => {
       throw error;
     }
 
-    console.log('Booking created successfully:', result);
-
     return result;
   } catch (error) {
-    // Only log unexpected errors, not API validation errors
-    if (!error.response) {
-      console.error('Create booking error:', error);
-    }
     throw error;
   }
 };
 
-/**
- * Get all bookings for a specific user
- * @param {string|number} userId - User ID
- * @returns {Promise<Object>} User's bookings with transformed data
- */
+// Get user's bookings
 export const getUserBookings = async (userId) => {
   try {
     const response = await fetch(
@@ -162,9 +123,7 @@ export const getUserBookings = async (userId) => {
     );
 
     const result = await response.json();
-    console.log('Raw API response:', result);
 
-    // Handle API response format: { success, message, status_code, data }
     if (!result.success) {
       const error = new Error(result.message || 'Failed to fetch user bookings');
       error.statusCode = result.status_code;
@@ -172,7 +131,6 @@ export const getUserBookings = async (userId) => {
       throw error;
     }
 
-    // Transform bookings data to UI format
     const transformedData = {
       ...result,
       data: Array.isArray(result.data)
@@ -180,22 +138,13 @@ export const getUserBookings = async (userId) => {
         : []
     };
 
-    console.log('Transformed bookings:', transformedData);
     return transformedData;
   } catch (error) {
-    // Only log unexpected errors, not API validation errors
-    if (!error.response) {
-      console.error('Get user bookings error:', error);
-    }
     throw error;
   }
 };
 
-/**
- * Get booking by ID
- * @param {string|number} bookingId - Booking ID
- * @returns {Promise<Object>} Booking details
- */
+// Get booking by ID
 export const getBookingById = async (bookingId) => {
   try {
     const response = await fetch(
@@ -212,16 +161,11 @@ export const getBookingById = async (bookingId) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Get booking by ID error:', error);
     throw error;
   }
 };
 
-/**
- * Cancel a booking
- * @param {string|number} bookingId - Booking ID to cancel
- * @returns {Promise<Object>} Cancellation response
- */
+// Cancel booking
 export const cancelBooking = async (bookingId) => {
   try {
     const response = await fetch(
@@ -247,20 +191,11 @@ export const cancelBooking = async (bookingId) => {
 
     return result;
   } catch (error) {
-    // Only log unexpected errors, not API validation errors
-    if (!error.response) {
-      console.error('Cancel booking error:', error);
-    }
     throw error;
   }
 };
 
-/**
- * Update a booking
- * @param {string|number} bookingId - Booking ID
- * @param {Object} updateData - Updated booking data
- * @returns {Promise<Object>} Updated booking
- */
+// Update booking
 export const updateBooking = async (bookingId, updateData) => {
   try {
     const response = await fetch(
@@ -279,17 +214,11 @@ export const updateBooking = async (bookingId, updateData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Update booking error:', error);
     throw error;
   }
 };
 
-/**
- * Check-in to a booking
- * @param {string|number} bookingId - Booking ID
- * @param {string} checkinCode - Check-in code
- * @returns {Promise<Object>} Check-in response
- */
+// Check-in to booking
 export const checkInBooking = async (bookingId, checkinCode) => {
   try {
     const response = await fetch(
@@ -316,19 +245,11 @@ export const checkInBooking = async (bookingId, checkinCode) => {
 
     return result;
   } catch (error) {
-    // Only log unexpected errors, not API validation errors
-    if (!error.response) {
-      console.error('Check-in booking error:', error);
-    }
     throw error;
   }
 };
 
-/**
- * Check-out from a booking
- * @param {string|number} bookingId - Booking ID
- * @returns {Promise<Object>} Check-out response
- */
+// Check-out from booking
 export const checkOutBooking = async (bookingId) => {
   try {
     const response = await fetch(
@@ -354,19 +275,11 @@ export const checkOutBooking = async (bookingId) => {
 
     return result;
   } catch (error) {
-    // Only log unexpected errors, not API validation errors
-    if (!error.response) {
-      console.error('Check-out booking error:', error);
-    }
     throw error;
   }
 };
 
-/**
- * Delete a booking (admin only)
- * @param {string|number} bookingId - Booking ID to delete
- * @returns {Promise<Object>} Deletion response
- */
+// Delete booking (admin only)
 export const deleteBooking = async (bookingId) => {
   try {
     const response = await fetch(
@@ -389,10 +302,6 @@ export const deleteBooking = async (bookingId) => {
 
     return result;
   } catch (error) {
-    // Only log unexpected errors, not API validation errors
-    if (!error.response) {
-      console.error('Delete booking error:', error);
-    }
     throw error;
   }
 };

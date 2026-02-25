@@ -1,7 +1,4 @@
-/**
- * useSpaces hooks
- * Combines REST API fallback with WebSocket real-time updates for spaces
- */
+// Spaces hooks with WebSocket updates
 
 'use client';
 
@@ -14,22 +11,17 @@ import {
   getSpaceById,
 } from '@/services/spaceService';
 
-/**
- * Fetch space by ID
- */
+// Get space by ID
 export const useSpace = (spaceId) => {
   return useQuery({
     queryKey: ['spaces', spaceId],
     queryFn: () => getSpaceById(spaceId),
     enabled: !!spaceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
-/**
- * Fetch all spaces with real-time WebSocket updates
- * Falls back to REST API if WebSocket is not connected
- */
+// Get all spaces with WebSocket updates
 export const useAllSpaces = () => {
   const { isConnected, spaces: wsSpaces, subscribe } = useSpacesWebSocket();
   const [spaces, setSpaces] = useState([]);
@@ -39,18 +31,16 @@ export const useAllSpaces = () => {
   const restQuery = useQuery({
     queryKey: ['spaces', 'all'],
     queryFn: getAllSpaces,
-    enabled: !isConnected, // Only use REST API if WebSocket is not connected
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !isConnected,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // When WebSocket is connected, ALWAYS use WebSocket data
+  // Use WebSocket data when connected
   useEffect(() => {
     if (isConnected && wsSpaces && wsSpaces.length > 0) {
-      console.log('📋 Setting LIVE WebSocket spaces:', wsSpaces.length);
       setSpaces(wsSpaces);
       setSource('websocket');
     } else if (!isConnected && restQuery.data) {
-      console.log('📋 Using REST API spaces:', restQuery.data.length);
       setSpaces(restQuery.data);
       setSource('rest');
     }
@@ -62,17 +52,12 @@ export const useAllSpaces = () => {
 
     const unsubscribers = [
       subscribe('space_created', (space) => {
-        console.log('🆕 Space created event received in hook:', space);
       }),
       subscribe('space_updated', (space) => {
-        console.log('🔧 Space updated event received in hook:', space);
       }),
       subscribe('space_deleted', (data) => {
-        console.log('🗑️ Space deleted event received in hook:', data);
       }),
       subscribe('availability_changed', (data) => {
-        console.log('📅 Availability changed event received in hook:', data);
-        // You may want to refetch spaces here
       }),
     ];
 
@@ -85,7 +70,7 @@ export const useAllSpaces = () => {
     data: spaces,
     isLoading: source === 'loading' || restQuery.isLoading,
     error: restQuery.error,
-    source, // 'websocket', 'rest', or 'loading'
+    source,
     isConnected,
   };
 };
@@ -110,7 +95,6 @@ export const useSearchSpaces = (filters = {}) => {
   // Fetch spaces via WebSocket when connected
   useEffect(() => {
     if (isConnected && fetchSpaces) {
-      console.log('📡 Fetching spaces via WebSocket with filters:', filters);
       fetchSpaces(filters);
     }
   }, [isConnected, fetchSpaces, JSON.stringify(filters)]);
@@ -118,11 +102,9 @@ export const useSearchSpaces = (filters = {}) => {
   // Handle WebSocket vs REST data
   useEffect(() => {
     if (isConnected && wsSpaces) {
-      console.log('📋 Setting LIVE WebSocket search results:', wsSpaces.length);
       setSpaces(wsSpaces);
       setSource('websocket');
     } else if (!isConnected && restQuery.data) {
-      console.log('📋 Using REST API search results:', restQuery.data.length);
       setSpaces(restQuery.data);
       setSource('rest');
     }
@@ -133,7 +115,6 @@ export const useSearchSpaces = (filters = {}) => {
     if (!isConnected) return;
 
     const unsubscribe = subscribe('availability_changed', (data) => {
-      console.log('📅 Availability changed - refetching spaces:', data);
       // Automatically refetch with current filters
       if (fetchSpaces) {
         fetchSpaces(filters);

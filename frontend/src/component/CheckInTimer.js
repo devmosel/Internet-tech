@@ -1,7 +1,4 @@
-/**
- * CheckInTimer Component
- * Shows active check-in status with elapsed time
- */
+// Check-in timer showing elapsed time
 
 'use client';
 
@@ -15,12 +12,10 @@ export default function CheckInTimer({ booking }) {
     if (!booking?.checkin_at) return;
 
     const updateElapsedTime = () => {
-      // Parse the checkin time - try to handle timezone properly
       let checkinTime;
       
-      // If the string doesn't include timezone info, treat it as UTC
+      // Handle timezone properly
       if (typeof booking.checkin_at === 'string' && !booking.checkin_at.includes('Z') && !booking.checkin_at.includes('+')) {
-        // Append 'Z' to treat as UTC
         checkinTime = new Date(booking.checkin_at + 'Z');
       } else {
         checkinTime = new Date(booking.checkin_at);
@@ -28,7 +23,6 @@ export default function CheckInTimer({ booking }) {
       
       const now = new Date();
       
-      // Calculate difference in total seconds
       const diffSeconds = Math.max(0, Math.floor((now.getTime() - checkinTime.getTime()) / 1000));
       
       const hours = Math.floor(diffSeconds / 3600);

@@ -44,12 +44,6 @@ export default function BookingPage() {
 
   // Debug: Track when spaces change
   useEffect(() => {
-    console.log('📊 Booking Page: Spaces updated, count:', spaces.length);
-    if (spaces.length > 0) {
-      console.log('📊 First space:', spaces[0].name, '| is_available:', spaces[0].is_available);
-      const occupied = spaces.filter(s => s.is_available === false);
-      console.log('📊 Occupied spaces:', occupied.map(s => s.name));
-    }
   }, [spaces]);
 
   // Derived state
@@ -186,26 +180,6 @@ export default function BookingPage() {
       occupiedDesks.push(roomId);
     }
   });
-
-    // Debug log to verify mapping
-    console.log('Floor Spaces Mapping:', {
-      lantai1: {
-        totalHotDesks: floor1HotDesks.length,
-        totalMeetingRooms: floor1MeetingRooms.length,
-        totalPrivateRooms: floor1PrivateRooms.length,
-      },
-      lantai2: {
-        totalHotDesks: floor2HotDesks.length,
-        totalMeetingRooms: floor2MeetingRooms.length,
-      },
-      lantai3: {
-        totalMeetingRooms: floor3MeetingRooms.length,
-        totalPrivateRooms: floor3PrivateRooms.length,
-      },
-      deskSpaceMap: Object.keys(deskSpaceMap),
-      occupiedDesks,
-      availableSpaces: Object.keys(deskSpaceMap).filter(id => !occupiedDesks.includes(id))
-    });
 
     return { deskSpaceMap, occupiedDesks };
   }, [spaces, floor1HotDesks, floor1MeetingRooms, floor1PrivateRooms, floor2HotDesks, floor2MeetingRooms, floor3MeetingRooms, floor3PrivateRooms]);

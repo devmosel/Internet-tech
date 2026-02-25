@@ -1,13 +1,6 @@
-/**
- * Date utility functions
- * Helpers for date formatting and manipulation
- */
+// Date formatting helpers
 
-/**
- * Get ordinal suffix for a number (1st, 2nd, 3rd, etc.)
- * @param {number} num - The number to get suffix for
- * @returns {string} Ordinal suffix
- */
+// Add ordinal suffix (1st, 2nd, 3rd, etc)
 export const getOrdinalSuffix = (num) => {
   const j = num % 10;
   const k = num % 100;
@@ -19,11 +12,7 @@ export const getOrdinalSuffix = (num) => {
   return 'th';
 };
 
-/**
- * Format date for display (e.g., "October 16th, 2025")
- * @param {string} dateStr - Date string in YYYY-MM-DD format
- * @returns {string} Formatted date string
- */
+// Format date as "October 16th, 2025"
 export const formatDateForDisplay = (dateStr) => {
   const date = new Date(dateStr);
   const months = [
@@ -39,22 +28,14 @@ export const formatDateForDisplay = (dateStr) => {
   return `${monthName} ${dayNum}${suffix}, ${year}`;
 };
 
-/**
- * Check if date is weekend (Saturday or Sunday)
- * @param {string} dateStr - Date string in YYYY-MM-DD format
- * @returns {boolean} True if weekend
- */
+// Check if date is Saturday or Sunday
 export const isWeekend = (dateStr) => {
   const date = new Date(dateStr);
   const dayOfWeek = date.getDay();
   return dayOfWeek === 0 || dayOfWeek === 6;
 };
 
-/**
- * Format date with day name (e.g., "Monday, October 27, 2025")
- * @param {string} dateStr - Date string in YYYY-MM-DD format
- * @returns {string} Formatted date string with day name
- */
+// Format with day name ("Monday, October 27, 2025")
 export const formatDateWithDay = (dateStr) => {
   const date = new Date(dateStr);
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

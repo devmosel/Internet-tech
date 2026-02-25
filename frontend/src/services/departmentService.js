@@ -1,8 +1,6 @@
 import { API_CONFIG, API_ENDPOINTS } from './config';
 
-/**
- * Get all departments
- */
+// Get all departments
 export const getAllDepartments = async () => {
   try {
     const token = localStorage.getItem('token');
@@ -26,14 +24,11 @@ export const getAllDepartments = async () => {
 
     return data;
   } catch (error) {
-    console.error('Error fetching departments:', error);
     throw error;
   }
 };
 
-/**
- * Create a new department
- */
+// Create new department
 export const createDepartment = async (departmentData) => {
   try {
     const token = localStorage.getItem('token');
@@ -58,14 +53,11 @@ export const createDepartment = async (departmentData) => {
 
     return data;
   } catch (error) {
-    console.error('Error creating department:', error);
     throw error;
   }
 };
 
-/**
- * Update an existing department
- */
+// Update department
 export const updateDepartment = async (departmentId, departmentData) => {
   try {
     const token = localStorage.getItem('token');
@@ -90,14 +82,11 @@ export const updateDepartment = async (departmentId, departmentData) => {
 
     return data;
   } catch (error) {
-    console.error('Error updating department:', error);
     throw error;
   }
 };
 
-/**
- * Delete a department
- */
+// Delete department
 export const deleteDepartment = async (departmentId) => {
   try {
     const token = localStorage.getItem('token');
@@ -121,7 +110,6 @@ export const deleteDepartment = async (departmentId) => {
 
     return data;
   } catch (error) {
-    console.error('Error deleting department:', error);
     throw error;
   }
 };

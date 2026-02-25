@@ -81,7 +81,6 @@ export default function DeleteConfirmDialog({ isOpen, onClose, userName, onConfi
                 });
             }
         } catch (error) {
-            console.error('Delete error:', error);
             setIsDeleting(false);
         }
     };

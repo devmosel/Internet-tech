@@ -139,7 +139,6 @@ export default function TaskDialog({ isOpen, onClose, onSubmit, assignmentId, us
                 });
             }
         } catch (error) {
-            console.error('Form submission error:', error);
         } finally {
             setIsSubmitting(false);
         }

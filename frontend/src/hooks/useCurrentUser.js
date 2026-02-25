@@ -13,7 +13,6 @@ export const useCurrentUser = () => {
     queryKey: ['currentUser'],
     queryFn: () => {
       const user = auth.getUser();
-      console.log('Current user loaded:', user);
       return user;
     },
     staleTime: 5 * 60 * 1000, // User data is fresh for 5 minutes

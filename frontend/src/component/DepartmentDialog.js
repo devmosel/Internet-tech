@@ -128,7 +128,6 @@ export default function DepartmentDialog({ isOpen, onClose, mode = 'create', dep
                 });
             }
         } catch (error) {
-            console.error('Form submission error:', error);
         } finally {
             setIsSubmitting(false);
         }

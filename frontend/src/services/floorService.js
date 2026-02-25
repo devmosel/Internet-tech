@@ -1,9 +1,6 @@
 import { API_CONFIG, API_ENDPOINTS } from './config';
 
-/**
- * Get all floors
- * @returns {Promise<Object>} API response with floors data
- */
+// Get all floors
 export const getAllFloors = async () => {
   try {
     const token = localStorage.getItem('token');
@@ -20,7 +17,6 @@ export const getAllFloors = async () => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching floors:', error);
     throw error;
   }
 };

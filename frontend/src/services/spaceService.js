@@ -1,15 +1,8 @@
-/**
- * Space Service
- * Handles all space-related API calls
- */
+// Space service - search, get, update spaces
 
 import { API_CONFIG, API_ENDPOINTS } from './config';
 import { auth } from '@/lib/auth';
 
-/**
- * Get headers with authentication token
- * @returns {Object} Headers object with auth token if available
- */
 const getAuthHeaders = () => {
   const token = auth.getToken();
   const headers = { ...API_CONFIG.HEADERS };
@@ -21,13 +14,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-/**
- * Search for available spaces with date and time filters
- * @param {string} date - Date in YYYY-MM-DD format
- * @param {string} startTime - Start time in HH:MM format
- * @param {string} endTime - End time in HH:MM format
- * @returns {Promise<Object>} Response containing array of spaces
- */
+// Search available spaces by date/time
 export const searchSpaces = async (date, startTime, endTime) => {
   try {
     const params = new URLSearchParams({
@@ -45,8 +32,6 @@ export const searchSpaces = async (date, startTime, endTime) => {
     );
 
     const result = await response.json();
-    console.log('Search spaces API response:', result);
-    // Handle API response format: { success, message, status_code, data }
     if (!result.success) {
       const error = new Error(result.message || 'Failed to fetch spaces');
       error.statusCode = result.status_code;
@@ -56,18 +41,11 @@ export const searchSpaces = async (date, startTime, endTime) => {
 
     return result;
   } catch (error) {
-    // Only log unexpected errors, not API validation errors
-    if (!error.response) {
-      console.error('Search spaces error:', error);
-    }
     throw error;
   }
 };
 
-/**
- * Get all spaces (without filters)
- * @returns {Promise<Object>} Response containing array of all spaces
- */
+// Get all spaces
 export const getAllSpaces = async () => {
   try {
     const response = await fetch(
@@ -77,7 +55,6 @@ export const getAllSpaces = async () => {
         headers: getAuthHeaders(),
       }
     );
-    console.log('Get all spaces response status:', response.status);
 
     if (!response.ok) {
       throw new Error('Failed to fetch spaces');
@@ -85,16 +62,11 @@ export const getAllSpaces = async () => {
 
     return await response.json();
   } catch (error) {
-    console.error('Get all spaces error:', error);
     throw error;
   }
 };
 
-/**
- * Get space by ID
- * @param {string|number} spaceId - Space ID
- * @returns {Promise<Object>} Space details
- */
+// Get space details
 export const getSpaceById = async (spaceId) => {
   try {
     const response = await fetch(
@@ -111,15 +83,11 @@ export const getSpaceById = async (spaceId) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Get space by ID error:', error);
     throw error;
   }
 };
 
-/**
- * Get all spaces for management view
- * @returns {Promise<Object>} Response containing array of spaces with management details
- */
+// Get all spaces (admin)
 export const getAllSpacesForManage = async () => {
   try {
     const response = await fetch(
@@ -136,17 +104,11 @@ export const getAllSpacesForManage = async () => {
 
     return await response.json();
   } catch (error) {
-    console.error('Get spaces for management error:', error);
     throw error;
   }
 };
 
-/**
- * Update space status (available/maintenance)
- * @param {string|number} spaceId - Space ID
- * @param {string} status - New status ('available' or 'maintenance')
- * @returns {Promise<Object>} Response from API
- */
+// Update space status
 export const updateSpaceStatus = async (spaceId, status) => {
   try {
     const response = await fetch(
@@ -164,7 +126,6 @@ export const updateSpaceStatus = async (spaceId, status) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Update space status error:', error);
     throw error;
   }
 };

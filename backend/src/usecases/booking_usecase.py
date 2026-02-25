@@ -26,7 +26,7 @@ class BookingUseCase:
         if start_at >= end_at:
             raise ValueError("Start time must be earlier than end time")
         
-        if start_at < datetime.now():
+        if start_at < datetime.utcnow():
             raise ValueError("Cannot book for a time that has already passed")
 
         # Get space
@@ -193,7 +193,7 @@ class BookingUseCase:
         if not booking:
             raise ValueError(f"Booking with ID {booking_id} not found")
         
-        now = datetime.now()
+        now = datetime.now(utc=True)
         update_data = {'updated_at': now}
 
         # Handle based on action

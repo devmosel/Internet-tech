@@ -13,14 +13,11 @@ export default function ProtectedRoute({ children }) {
     // Check authentication status
     const checkAuth = () => {
       const authenticated = auth.isAuthenticated();
-      console.log('Auth check:', authenticated, 'Token:', auth.getToken());
       
       if (!authenticated) {
         // Redirect to login if not authenticated
-        console.log('Not authenticated, redirecting to login');
         router.push('/login');
       } else {
-        console.log('Authenticated, showing content');
         setIsAuthenticated(true);
       }
       

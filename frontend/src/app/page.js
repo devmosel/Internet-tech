@@ -8,8 +8,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// --- Components ---
-
 const Button = ({ children, variant = 'primary', className = '', ...props }) => {
   const baseStyle = "h-12 px-6 rounded-xl font-medium text-base transition-all duration-300 border-[3px] border-black flex items-center justify-center gap-2 relative active:translate-x-[2px] active:translate-y-[2px] active:shadow-none bg-white";
 
@@ -44,8 +42,6 @@ const FeatureCard = ({ icon, title, description, index }) => {
   );
 };
 
-// --- Main Page ---
-
 export default function LandingPage() {
   const containerRef = useRef(null);
   const heroRef = useRef(null);
@@ -56,7 +52,7 @@ export default function LandingPage() {
 
   // Interactive Tilt Logic for Hero Image
   useEffect(() => {
-    const heroSection = heroRef.current;
+    cMouse tilt effect on hero it;
     if (!heroSection) return;
 
     const handleMouseMove = (e) => {
@@ -71,7 +67,7 @@ export default function LandingPage() {
         rotationY: x * 10,  // Tilt left/right
         rotationX: -y * 10, // Tilt up/down
         x: x * 20,
-        y: y * 20,
+        rotationX: -y * 10,
         duration: 0.5,
         ease: "power2.out",
         transformPerspective: 1000
@@ -101,11 +97,10 @@ export default function LandingPage() {
 
   // Main GSAP Animations
   useEffect(() => {
+  useEffect(() => {
     const ctx = gsap.context(() => {
 
-      // 1. Floating Shapes Animation (Background)
-      const shapes = gsap.utils.toArray('.floating-shape');
-      shapes.forEach((shape, i) => {
+      // Background shapes
         gsap.to(shape, {
           y: "random(-50, 50)",
           rotation: "random(-20, 20)",
@@ -120,10 +115,9 @@ export default function LandingPage() {
       // 2. Hero Cards Staggered Entrance
       const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-      // Main hero card slides up
-      heroTl.from('.hero-card', {
-        y: 80,
-        opacity: 0,
+      // Hero entrance animation
+      const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
         duration: 1,
         stagger: 0.15,
         ease: "back.out(1.2)"
@@ -133,7 +127,6 @@ export default function LandingPage() {
       heroTl.from('.hero-badge', {
         scale: 0.8,
         opacity: 0,
-        duration: 0.6,
         ease: "back.out(2)"
       }, "-=0.8");
 
@@ -142,7 +135,6 @@ export default function LandingPage() {
         y: 60,
         opacity: 0,
         duration: 0.8,
-        stagger: 0.1,
         ease: "power4.out"
       }, "-=0.5");
 
@@ -150,7 +142,6 @@ export default function LandingPage() {
       heroTl.from('.hero-btn', {
         scale: 0.9,
         opacity: 0,
-        duration: 0.5,
         ease: "back.out(1.5)"
       }, "-=0.4");
 
@@ -159,7 +150,7 @@ export default function LandingPage() {
       counters.forEach(counter => {
         const target = parseInt(counter.dataset.target);
         gsap.to(counter, {
-          innerHTML: target,
+         Number counters
           duration: 2,
           delay: 1,
           snap: { innerHTML: 1 },
@@ -175,7 +166,7 @@ export default function LandingPage() {
         gsap.fromTo(star,
           { scale: 0, rotation: -180 },
           {
-            scale: 1,
+         Stars
             rotation: 0,
             duration: 0.4,
             delay: 1.2 + (i * 0.1),
@@ -189,7 +180,7 @@ export default function LandingPage() {
         gsap.to(bar, {
           scaleY: gsap.utils.random(0.5, 1.5),
           duration: 0.5,
-          repeat: -1,
+         Activity bars
           yoyo: true,
           ease: "power1.inOut",
           delay: i * 0.15
@@ -201,7 +192,7 @@ export default function LandingPage() {
         gsap.to(avatar, {
           scale: 1.05,
           duration: 1,
-          repeat: -1,
+         Avatar pulse
           yoyo: true,
           ease: "sine.inOut",
           delay: i * 0.3
@@ -213,7 +204,7 @@ export default function LandingPage() {
         pill.addEventListener('mouseenter', () => {
           gsap.to(pill, { scale: 1.02, duration: 0.3, ease: "power2.out" });
         });
-        pill.addEventListener('mouseleave', () => {
+        pFeature pills hover () => {
           gsap.to(pill, { scale: 1, duration: 0.3, ease: "power2.out" });
         });
       });
@@ -223,7 +214,7 @@ export default function LandingPage() {
         btn.addEventListener('mousemove', (e) => {
           const rect = btn.getBoundingClientRect();
           const x = e.clientX - rect.left - rect.width / 2;
-          const y = e.clientY - rect.top - rect.height / 2;
+         Magnetic button effect rect.height / 2;
           gsap.to(btn, {
             x: x * 0.15,
             y: y * 0.15,
@@ -246,7 +237,7 @@ export default function LandingPage() {
         gsap.fromTo(card,
           {
             opacity: 0,
-            y: 100,
+         Feature cards scroll reveal
             rotation: gsap.utils.random(-5, 5)
           },
           {
@@ -269,7 +260,7 @@ export default function LandingPage() {
       gsap.from('.step-line', {
         scaleY: 0,
         transformOrigin: "top",
-        duration: 1.5,
+        dConnecting line
         ease: "power2.inOut",
         scrollTrigger: {
           trigger: '#how-it-works',
@@ -281,7 +272,7 @@ export default function LandingPage() {
       gsap.utils.toArray('.step-item').forEach((step, i) => {
         gsap.from(step, {
           x: -50,
-          opacity: 0,
+         Step items
           duration: 0.8,
           ease: "back.out(1.2)",
           scrollTrigger: {
@@ -296,7 +287,7 @@ export default function LandingPage() {
       gsap.to('.cta-text', {
         backgroundPosition: '0% 100%',
         scrollTrigger: {
-          trigger: '.cta-section',
+         CTA parallaxion',
           start: 'top bottom',
           end: 'bottom top',
           scrub: 1
@@ -311,7 +302,6 @@ export default function LandingPage() {
   // Button Hover Effect (Magnetic-ish)
   const handleBtnHover = (e) => {
     const btn = e.currentTarget;
-    gsap.to(btn, {
       scale: 1.05,
       duration: 0.3,
       ease: "power2.out"
@@ -334,13 +324,11 @@ export default function LandingPage() {
       <div className="absolute top-20 left-10 w-20 h-20 border-[3px] border-black rounded-full text-[#E0E7FF] opacity-50 floating-shape z-0 pointer-events-none" />
       <div className="absolute top-40 right-20 w-12 h-12 bg-[#FFD233] border-[3px] border-black rotate-12 floating-shape z-0 pointer-events-none" />
       <div className="absolute bottom-1/4 left-1/3 w-8 h-8 bg-orange-400 border-[3px] border-black rounded-full floating-shape z-0 pointer-events-none" />
-
-      {/* Navigation */}
+{/* Navigation */}
       <nav className="sticky top-0 z-50 bg-[#FFFEF8]/90 backdrop-blur-md border-b-[3px] border-black px-6 lg:px-12 py-4">
         <div className="max-w-7xl mx-auto flex h-full items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <h1 className="font-['Tanker-Regular'] text-3xl md:text-4xl text-black tracking-wide group-hover:scale-105 transition-transform duration-300">
-              openBO
             </h1>
           </Link>
 
@@ -376,22 +364,16 @@ export default function LandingPage() {
         <div className="w-full max-w-7xl">
           {/* Main Hero Grid - Bento Style */}
           <div className="grid grid-cols-12 gap-4 lg:gap-6 mb-0">
-
-            {/* Left Column - Main Content (spans 7 cols on desktop) */}
+      {/* Left Column - Main Content (spans 7 cols on desktop) */}
             <div className="col-span-12 lg:col-span-7 space-y-6">
 
-              {/* Main Hero Card */}
-              <div className="hero-card bg-white rounded-[32px] p-8 lg:p-12 border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group">
-                {/* Animated gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FFD233]/5 via-transparent to-[#FF6B35]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          <div className="grid grid-cols-12 gap-4 lg:gap-6 mb-0">
 
-                {/* Badge */}
-                <div className="hero-badge inline-flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full mb-8">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
-                  </span>
-                  <span className="text-sm font-semibold tracking-wide">500+ companies trust us</span>
+            <div className="col-span-12 lg:col-span-7 space-y-6">
+
+              <div className="hero-card bg-white rounded-[32px] p-8 lg:p-12 border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#FFD233]/5 via-transparent to-[#FF6B35]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+Name="text-sm font-semibold tracking-wide">500+ companies trust us</span>
                 </div>
 
                 {/* Headline */}
@@ -405,7 +387,6 @@ export default function LandingPage() {
                     <h1 className="hero-text-line font-['Tanker-Regular'] text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-[1.1]">
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#F7931E]">perfectly</span>
                       <span className="text-black"> organized</span>
-                    </h1>
                   </div>
                 </div>
 
@@ -541,10 +522,10 @@ export default function LandingPage() {
                       <p className="text-white/50 text-xs">Live activity</p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className={`w-1.5 h-${i === 2 ? '4' : '3'} bg-green-400 rounded-full activity-bar`} style={{ animationDelay: `${i * 0.2}s` }} />
-                    ))}
+                  <div className="flex gap-1 items-end">
+                    <div className="w-1.5 h-3 bg-green-400 rounded-full activity-bar" style={{ animationDelay: '0s' }} />
+                    <div className="w-1.5 h-4 bg-green-400 rounded-full activity-bar" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-1.5 h-3 bg-green-400 rounded-full activity-bar" style={{ animationDelay: '0.4s' }} />
                   </div>
                 </div>
               </div>

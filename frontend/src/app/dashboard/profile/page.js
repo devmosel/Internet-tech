@@ -39,7 +39,6 @@ export default function ProfilePage() {
 
     const handleSave = () => {
         // TODO: Implement API call to update user profile
-        console.log('Saving profile:', formData);
         setIsEditing(false);
         // Show success toast here
     };

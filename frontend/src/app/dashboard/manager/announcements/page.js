@@ -55,7 +55,6 @@ export default function ManagerAnnouncementsPage() {
   // Subscribe to real-time WebSocket updates
   useEffect(() => {
     const unsubscribeNew = subscribe('announcement_new', (newAnnouncement) => {
-      console.log('📢 Manager page: New announcement received:', newAnnouncement);
       showToastMessage({
         type: 'success',
         title: '📢 New Announcement',
@@ -65,7 +64,6 @@ export default function ManagerAnnouncementsPage() {
     });
 
     const unsubscribeUpdate = subscribe('announcement_update', (updatedAnnouncement) => {
-      console.log('✏️ Manager page: Announcement updated:', updatedAnnouncement);
       showToastMessage({
         type: 'info',
         title: '✏️ Announcement Updated',
@@ -75,7 +73,6 @@ export default function ManagerAnnouncementsPage() {
     });
 
     const unsubscribeDelete = subscribe('announcement_delete', (deletedAnnouncement) => {
-      console.log('🗑️ Manager page: Announcement deleted:', deletedAnnouncement);
       showToastMessage({
         type: 'warning',
         title: '🗑️ Announcement Deleted',
@@ -104,8 +101,6 @@ export default function ManagerAnnouncementsPage() {
         setAnnouncements(response.data);
       }
     } catch (err) {
-      console.error('Error fetching announcements:', err);
-
       // Use mock data as fallback
       const mockAnnouncements = [
         {
@@ -156,7 +151,6 @@ export default function ManagerAnnouncementsPage() {
         setDepartment(response.department);
       }
     } catch (err) {
-      console.error('Error fetching department info:', err);
     }
   };
 

@@ -1,8 +1,6 @@
 import { API_CONFIG, API_ENDPOINTS } from './config';
 
-/**
- * Get all blackouts
- */
+// Get all blackouts
 export const getAllBlackouts = async () => {
     try {
         const token = localStorage.getItem('token');
@@ -26,14 +24,11 @@ export const getAllBlackouts = async () => {
 
         return data;
     } catch (error) {
-        console.error('Error fetching blackouts:', error);
         throw error;
     }
 };
 
-/**
- * Create a new blackout
- */
+// Create new blackout
 export const createBlackout = async (blackoutData) => {
     try {
         const token = localStorage.getItem('token');
@@ -58,14 +53,11 @@ export const createBlackout = async (blackoutData) => {
 
         return data;
     } catch (error) {
-        console.error('Error creating blackout:', error);
         throw error;
     }
 };
 
-/**
- * Update an existing blackout
- */
+// Update blackout
 export const updateBlackout = async (blackoutId, blackoutData) => {
     try {
         const token = localStorage.getItem('token');
@@ -90,14 +82,11 @@ export const updateBlackout = async (blackoutId, blackoutData) => {
 
         return data;
     } catch (error) {
-        console.error('Error updating blackout:', error);
         throw error;
     }
 };
 
-/**
- * Delete a blackout
- */
+// Delete blackout
 export const deleteBlackout = async (blackoutId) => {
     try {
         const token = localStorage.getItem('token');
@@ -121,7 +110,6 @@ export const deleteBlackout = async (blackoutId) => {
 
         return data;
     } catch (error) {
-        console.error('Error deleting blackout:', error);
         throw error;
     }
 };

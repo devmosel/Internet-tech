@@ -1,8 +1,4 @@
-/**
- * Reusable Sidebar component
- * Can be shown/hidden with toggle button
- * Matches Figma design with open/collapsed states
- */
+// Sidebar component with toggle and animations
 
 'use client';
 
@@ -21,7 +17,6 @@ import {
   BookCheck,
   Shield,
   HelpCircle,
-  Settings,
   LogOut
 } from 'lucide-react';
 
@@ -30,20 +25,18 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { currentUser } = useCurrentUser();
 
-  // Refs for GSAP animations
   const sidebarRef = useRef(null);
   const headerTextRef = useRef(null);
   const navigationLabelsRef = useRef([]);
   const userProfileRef = useRef(null);
 
-  // Manage sidebar open/close state with localStorage persistence
-  // Always start with true to avoid hydration mismatch
+  // Start with open to avoid hydration mismatch
   const [isOpen, setIsOpen] = useState(true);
   const [isReady, setIsReady] = useState(false);
 
   const isInitialMount = useRef(true);
 
-  // Load from localStorage after mount to avoid hydration issues
+  // Load from localStorage after mount
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarOpen');
     if (savedState !== null) {
@@ -352,24 +345,6 @@ export default function Sidebar() {
                   style={{ opacity: isInitialMount.current ? 1 : undefined }}
                 >
                   Support
-                </span>
-              )}
-            </button>
-          </Tooltip>
-
-          <Tooltip text="Settings" disabled={isOpen}>
-            <button
-              className={`h-[41px] rounded-xl flex items-center transition-all w-full font-bold text-black hover:bg-white ${isOpen ? 'px-3 gap-3' : 'justify-center'
-                }`}
-            >
-              <Settings size={18} className="flex-shrink-0" />
-              {isOpen && (
-                <span
-                  ref={el => navigationLabelsRef.current[currentUser?.role === 'superadmin' ? 6 : 5] = el}
-                  className="text-sm font-normal tracking-[-0.3008px] leading-[21px]"
-                  style={{ opacity: isInitialMount.current ? 1 : undefined }}
-                >
-                  Settings
                 </span>
               )}
             </button>

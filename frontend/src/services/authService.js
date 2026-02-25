@@ -1,16 +1,8 @@
-/**
- * Authentication Service
- * Handles all authentication-related API calls
- */
+// Auth service - login, logout, registration
 
 import { API_CONFIG, API_ENDPOINTS } from './config';
 
-/**
- * Login user with credentials
- * @param {string} username - User's username or email
- * @param {string} password - User's password
- * @returns {Promise<Object>} Response containing token and user data
- */
+// User login
 export const login = async (username, password) => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.LOGIN}`, {
@@ -26,7 +18,6 @@ export const login = async (username, password) => {
 
     const data = await response.json();
 
-    // Extract token and user data from response
     const token = data.data?.access_token || data.data?.token || data.access_token || data.token;
     const userData = data.data?.user || data.user;
 
@@ -40,15 +31,11 @@ export const login = async (username, password) => {
 
     return data;
   } catch (error) {
-    console.error('Login error:', error);
     throw error;
   }
 };
 
-/**
- * Logout user
- * @returns {Promise<Object>} Logout response
- */
+// Logout user
 export const logout = async () => {
   try {
     // Get auth token
@@ -56,41 +43,38 @@ export const logout = async () => {
     const token = auth.getToken();
 
     const headers = { ...API_CONFIG.HEADERS };
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
     // Try to call logout API with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.LOGOUT}`, {
       method: 'POST',
-      headers,
+      headers: headers,
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      // Don't throw on API error - logout should always succeed locally
-      console.warn('Logout API returned error, but continuing with local logout');
       return { success: true, message: 'Logged out locally' };
     }
 
     return await response.json();
   } catch (error) {
-    // Don't throw error - logout should always succeed
-    console.warn('Logout API call failed, but continuing with local logout:', error.message);
     return { success: true, message: 'Logged out locally (API unavailable)' };
+  } finally {
+    // Always clear local auth state
+    const { auth } = await import('@/lib/auth');
+    auth.logout();
   }
 };
 
-/**
- * Register new user
- * @param {Object} userData - User registration data
- * @returns {Promise<Object>} Registration response
- */
+// User registration
 export const register = async (userData) => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.REGISTER}`, {
@@ -106,7 +90,6 @@ export const register = async (userData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Registration error:', error);
     throw error;
   }
 };

@@ -34,8 +34,6 @@ export default function AdminDepartmentsPage() {
         setDepartments(response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch departments:', error);
-
       // Use mock data as fallback
       const mockDepartments = [
         {
@@ -176,7 +174,6 @@ export default function AdminDepartmentsPage() {
         }
       }
     } catch (error) {
-      console.error('Error submitting department:', error);
       throw error;
     }
   };
@@ -191,7 +188,6 @@ export default function AdminDepartmentsPage() {
         setDepartmentToDelete(null);
       }
     } catch (error) {
-      console.error('Error deleting department:', error);
     }
   };
 

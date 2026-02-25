@@ -70,7 +70,6 @@ export default function FloorPlan({
 
   // Debug: Track when occupiedDesks prop changes
   useEffect(() => {
-    console.log('🎨 FloorPlan: occupiedDesks prop changed:', occupiedDesks);
   }, [occupiedDesks]);
 
   // Get SVG file paths based on floor
@@ -89,7 +88,6 @@ export default function FloorPlan({
 
   // Reset state when floor changes
   useEffect(() => {
-    console.log('🔄 FloorPlan: Floor changed to', selectedLevel);
     setSvgLoaded(false);
     setOccupiedSvgDoc(null);
     setCurrentLoadedFloor(null);
@@ -99,8 +97,6 @@ export default function FloorPlan({
   useEffect(() => {
     const { occupied: occupiedSvgFile } = getSvgPaths(selectedLevel);
 
-    console.log('🔄 FloorPlan: Loading occupied SVG for', selectedLevel, occupiedSvgFile);
-
     fetch(occupiedSvgFile)
       .then((response) => response.text())
       .then((svgText) => {
@@ -108,10 +104,8 @@ export default function FloorPlan({
         const doc = parser.parseFromString(svgText, 'image/svg+xml');
         setOccupiedSvgDoc(doc);
         setCurrentLoadedFloor(selectedLevel);
-        console.log('✅ FloorPlan: Occupied SVG loaded for', selectedLevel);
       })
       .catch((err) => {
-        console.error('Failed to load occupied SVG:', err);
       });
   }, [selectedLevel]);
 
@@ -125,29 +119,20 @@ export default function FloorPlan({
     // 2. Main SVG is loaded
     // 3. Occupied SVG is loaded for the CURRENT floor
     if (!svgContainerRef.current || !svgLoaded || !occupiedSvgDoc) {
-      console.log('⏳ FloorPlan: Waiting for conditions', { 
-        container: !!svgContainerRef.current, 
-        svgLoaded, 
-        occupiedSvgDoc: !!occupiedSvgDoc 
-      });
       return;
     }
     
     if (currentLoadedFloor !== selectedLevel) {
-      console.log('⏳ FloorPlan: Waiting for occupied SVG to match floor', selectedLevel, 'current:', currentLoadedFloor);
       return;
     }
 
     const objectElement = svgContainerRef.current.querySelector(`object[data-floor="${selectedLevel}"]`);
     if (!objectElement || !objectElement.contentDocument) {
-      console.log('⏳ FloorPlan: Waiting for object element', selectedLevel);
       return;
     }
 
     const svgDoc = objectElement.contentDocument;
     
-    console.log('🔄 FloorPlan: Updating SVG for', selectedLevel, 'with occupied desks:', occupiedDesks);
-
     // Get all hotDesk, meetingRoom, and privateRoom elements from the SVG
     const hotDeskElements = Array.from(svgDoc.querySelectorAll('[id^="hotDesk"]')).filter(el => {
       return /^hotDesk\d{2}$/.test(el.id);
@@ -159,8 +144,6 @@ export default function FloorPlan({
       return /^privateRoom\d{2}$/.test(el.id);
     });
     const allSpaceElements = [...hotDeskElements, ...meetingRoomElements, ...privateRoomElements];
-
-    console.log('📍 FloorPlan: Found elements in', selectedLevel, ':', allSpaceElements.map(e => e.id));
 
     allSpaceElements.forEach((spaceElement) => {
       const spaceId = spaceElement.id;
@@ -244,8 +227,6 @@ export default function FloorPlan({
           }
 
           newSpaceElement.setAttribute('data-occupied-replaced', 'true');
-        } else {
-          console.warn(`⚠️ FloorPlan: Could not find occupied element for ${spaceId} (tried ${occupiedElementId})`);
         }
       } else {
         // Reset to available state if it was previously replaced
@@ -279,7 +260,6 @@ export default function FloorPlan({
 
   // Handle SVG load
   const handleSvgLoad = (floor) => {
-    console.log('🎨 FloorPlan: Main SVG loaded for', floor);
     if (floor === selectedLevel) {
       setSvgLoaded(true);
     }

@@ -135,7 +135,6 @@ export default function AssignmentDialog({ isOpen, onClose, mode = 'create', ass
                 });
             }
         } catch (error) {
-            console.error('Form submission error:', error);
         } finally {
             setIsSubmitting(false);
         }

@@ -17,7 +17,7 @@ class StatsRepository:
     def get_today_bookings_count(user_id):
         """Get today's booking count for a user
         Only bookings with active and checkin status"""
-        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start + timedelta(days=1)
         
         count = Booking.query.filter(
@@ -32,7 +32,7 @@ class StatsRepository:
     @staticmethod
     def get_upcoming_bookings_count(user_id):
         """Get upcoming bookings count for a user with active status"""
-        tomorrow_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        tomorrow_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         
         count = Booking.query.filter(
             Booking.user_id == user_id,
@@ -46,7 +46,7 @@ class StatsRepository:
     def get_weekly_booking_hours(user_id):
         """Get total hours of bookings for the current week"""
         # Get start of current week (Monday)
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=7)
         

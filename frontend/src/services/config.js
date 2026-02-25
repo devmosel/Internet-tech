@@ -7,7 +7,7 @@
  */
 
 export const API_CONFIG = {
-  BASE_URL: 'https://seminar-be.devmosel.com',
+  BASE_URL: 'http://localhost:5001',
   TIMEOUT: 10000, // 10 seconds
   HEADERS: {
     'Content-Type': 'application/json',

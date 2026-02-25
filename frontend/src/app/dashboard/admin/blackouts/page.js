@@ -47,8 +47,6 @@ export default function AdminBlackoutsPage() {
         setBlackouts(response.data);
       }
     } catch (error) {
-      console.error('Error fetching blackouts:', error);
-
       // Use mock data as fallback
       const mockBlackouts = [
         {
@@ -128,7 +126,6 @@ export default function AdminBlackoutsPage() {
         }
       }
     } catch (error) {
-      console.error('Error submitting blackout:', error);
       throw error;
     }
   };
@@ -143,7 +140,6 @@ export default function AdminBlackoutsPage() {
         setBlackoutToDelete(null);
       }
     } catch (error) {
-      console.error('Error deleting blackout:', error);
     }
   };
 

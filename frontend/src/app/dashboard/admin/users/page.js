@@ -163,7 +163,6 @@ export default function UsersPage() {
         setUsers(response.data);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
       // Use mock data as fallback
       setUsers(mockUsers);
     } finally {

@@ -47,8 +47,6 @@ export default function AdminAmenitiesPage() {
         setAmenities(response.data);
       }
     } catch (error) {
-      console.error('Error fetching amenities:', error);
-
       // Use mock data as fallback
       const mockAmenities = [
         { id: 1, name: 'WiFi', icon: 'wifi', space_id: 1, space_name: 'Hot Desk A1' },
@@ -243,7 +241,6 @@ export default function AdminAmenitiesPage() {
                               className="p-2 bg-white text-black border-2 border-black rounded-lg transition-all hover:bg-black hover:text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('Edit amenity:', amenity.id);
                               }}
                               title="Edit"
                             >
@@ -253,7 +250,6 @@ export default function AdminAmenitiesPage() {
                               className="p-2 bg-white text-black border-2 border-black rounded-lg transition-all hover:bg-[#e7000b] hover:text-white hover:border-[#e7000b]"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('Delete amenity:', amenity.id);
                               }}
                               title="Delete"
                             >

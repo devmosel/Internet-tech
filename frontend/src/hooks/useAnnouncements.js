@@ -22,16 +22,9 @@ export function useAnnouncements(fallbackData = []) {
   // When WebSocket is connected, ALWAYS use WebSocket data
   // Only use fallback when NOT connected
   useEffect(() => {
-    console.log('🔄 useAnnouncements: Effect triggered');
-    console.log('🔄 isConnected:', isConnected);
-    console.log('🔄 wsAnnouncements length:', wsAnnouncements?.length);
-    console.log('🔄 wsAnnouncements:', wsAnnouncements);
-    
     if (isConnected && wsAnnouncements) {
-      console.log('📋 Setting LIVE WebSocket announcements:', wsAnnouncements.length);
       setAnnouncements([...wsAnnouncements]); // Create new array reference
     } else if (!isConnected && fallbackData && fallbackData.length > 0) {
-      console.log('📋 Setting fallback REST API announcements:', fallbackData.length);
       setAnnouncements(fallbackData);
     }
   }, [isConnected, wsAnnouncements, fallbackData]);

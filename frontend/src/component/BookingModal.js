@@ -102,11 +102,7 @@ export default function BookingModal({ isOpen, onClose, space, bookingDetails })
   useEffect(() => {
     if (!isOpen || !space || !isConnected || !subscribe) return;
 
-    console.log('🔔 BookingModal: Subscribing to availability changes for space', space.id);
-
     const unsubscribe = subscribe('availability_changed', (data) => {
-      console.log('📅 BookingModal: Received availability_changed', data);
-      console.log('📅 BookingModal: Current lastBookingRef:', lastBookingRef.current);
       
       // Skip if this matches the booking the user just made
       if (lastBookingRef.current) {
@@ -117,20 +113,7 @@ export default function BookingModal({ isOpen, onClose, space, bookingDetails })
           data.affected_time_range?.start === start_time &&
           data.affected_time_range?.end === end_time;
         
-        console.log('🔍 BookingModal: Comparison details:', {
-          'data.space_id': data.space_id,
-          'stored space_id': space_id,
-          'data.date': data.date,
-          'stored date': date,
-          'data.start': data.affected_time_range?.start,
-          'stored start': start_time,
-          'data.end': data.affected_time_range?.end,
-          'stored end': end_time,
-          'matches': matchesOwnBooking
-        });
-        
         if (matchesOwnBooking) {
-          console.log('✅ BookingModal: Ignoring own booking event');
           return;
         }
       }
@@ -151,7 +134,6 @@ export default function BookingModal({ isOpen, onClose, space, bookingDetails })
           const hasOverlap = !(ourEnd <= eventStart || ourStart >= eventEnd);
           
           if (hasOverlap) {
-            console.log('⚠️ BookingModal: Space just became unavailable for our time slot!');
             setIsNowUnavailable(true);
             setUnavailableMessage(`This space was just booked by another user for ${eventStart} - ${eventEnd}`);
             
@@ -168,7 +150,6 @@ export default function BookingModal({ isOpen, onClose, space, bookingDetails })
     });
 
     return () => {
-      console.log('🔔 BookingModal: Unsubscribing from availability changes');
       unsubscribe();
     };
   }, [isOpen, space?.id, isConnected, subscribe, bookingDetails, showToastMessage, currentUser?.id]);
@@ -262,11 +243,8 @@ export default function BookingModal({ isOpen, onClose, space, bookingDetails })
       end_time: bookingDetails.endTime
     };
     
-    console.log('🎯 BookingModal: Tracking own booking to ignore WebSocket event:', lastBookingRef.current);
-    
     // Clear the tracking after 3 seconds
     setTimeout(() => {
-      console.log('🧹 BookingModal: Clearing own booking tracking');
       lastBookingRef.current = null;
     }, 3000);
 

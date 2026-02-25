@@ -24,8 +24,6 @@ export default function AdminFloorsPage() {
         setFloors(response.data);
       }
     } catch (error) {
-      console.error('Error fetching floors:', error);
-
       // Use mock data as fallback
       const mockFloors = [
         { id: 1, name: 'Floor 1', total_spaces: 15 },
@@ -229,14 +227,14 @@ export default function AdminFloorsPage() {
                       <div className="flex items-center gap-2">
                         <button
                           className="p-2 bg-white text-black border-2 border-black rounded-lg transition-all hover:bg-black hover:text-white"
-                          onClick={() => console.log('Edit floor:', floor.id)}
+                          onClick={() => {}}
                           title="Edit"
                         >
                           <Edit2 size={16} strokeWidth={2.5} />
                         </button>
                         <button
                           className="p-2 bg-white text-black border-2 border-black rounded-lg transition-all hover:bg-[#e7000b] hover:text-white hover:border-[#e7000b]"
-                          onClick={() => console.log('Delete floor:', floor.id)}
+                          onClick={() => {}}
                           title="Delete"
                         >
                           <Trash2 size={16} strokeWidth={2.5} />

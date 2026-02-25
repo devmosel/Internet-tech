@@ -1,15 +1,8 @@
-/**
- * Assignment Service
- * Handles all assignment-related API calls
- */
+// Assignment service - manage assignments
 
 import { API_CONFIG, API_ENDPOINTS } from './config';
 import { auth } from '@/lib/auth';
 
-/**
- * Get headers with authentication token
- * @returns {Object} Headers object with auth token if available
- */
 const getAuthHeaders = () => {
   const token = auth.getToken();
   const headers = { ...API_CONFIG.HEADERS };
@@ -21,10 +14,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-/**
- * Get all assignments
- * @returns {Promise<Object>} API response with all assignments
- */
+// Get all assignments
 export const getAllAssignments = async () => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ASSIGNMENTS}`, {
@@ -38,16 +28,11 @@ export const getAllAssignments = async () => {
 
     return await response.json();
   } catch (error) {
-    console.error('Error fetching assignments:', error);
     throw error;
   }
 };
 
-/**
- * Get assignment by ID
- * @param {number} id - Assignment ID
- * @returns {Promise<Object>} Assignment data
- */
+// Get assignment by ID
 export const getAssignmentById = async (id) => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ASSIGNMENT_BY_ID(id)}`, {
@@ -61,16 +46,11 @@ export const getAssignmentById = async (id) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Error fetching assignment:', error);
     throw error;
   }
 };
 
-/**
- * Create a new assignment
- * @param {Object} assignmentData - Assignment data to create
- * @returns {Promise<Object>} Created assignment data
- */
+// Create new assignment
 export const createAssignment = async (assignmentData) => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ASSIGNMENTS}`, {
@@ -86,17 +66,11 @@ export const createAssignment = async (assignmentData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Error creating assignment:', error);
     throw error;
   }
 };
 
-/**
- * Update an existing assignment
- * @param {number} id - Assignment ID to update
- * @param {Object} assignmentData - Updated assignment data
- * @returns {Promise<Object>} Updated assignment data
- */
+// Update assignment
 export const updateAssignment = async (id, assignmentData) => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ASSIGNMENT_BY_ID(id)}`, {
@@ -112,7 +86,6 @@ export const updateAssignment = async (id, assignmentData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Error updating assignment:', error);
     throw error;
   }
 };
@@ -136,7 +109,6 @@ export const deleteAssignment = async (id) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Error deleting assignment:', error);
     throw error;
   }
 };

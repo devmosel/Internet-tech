@@ -81,8 +81,6 @@ export default function ManagerUsersPage() {
         setDepartment(response.department);
       }
     } catch (error) {
-      console.error('Error fetching team users:', error);
-
       // Use mock data as fallback
       const mockUsers = [
         {

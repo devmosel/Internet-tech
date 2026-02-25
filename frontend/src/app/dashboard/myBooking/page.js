@@ -70,7 +70,6 @@ export default function MyBookingPage() {
           refetch();
         },
         onError: (error) => {
-          console.error('Check-in error:', error);
           showToastMessage({
             type: 'error',
             title: 'Check-in Failed',
@@ -94,7 +93,6 @@ export default function MyBookingPage() {
         refetch();
       },
       onError: (error) => {
-        console.error('Check-out error:', error);
         showToastMessage({
           type: 'error',
           title: 'Check-out Failed',
@@ -117,7 +115,6 @@ export default function MyBookingPage() {
         refetch();
       },
       onError: (error) => {
-        console.error('Cancel booking error:', error);
         showToastMessage({
           type: 'error',
           title: 'Cancellation Failed',

@@ -1,15 +1,8 @@
-/**
- * User Service
- * Handles all user-related API calls
- */
+// User service - profile, users management
 
 import { API_CONFIG, API_ENDPOINTS } from './config';
 import { auth } from '@/lib/auth';
 
-/**
- * Get headers with authentication token
- * @returns {Object} Headers object with auth token if available
- */
 const getAuthHeaders = () => {
   const token = auth.getToken();
   const headers = { ...API_CONFIG.HEADERS };
@@ -21,10 +14,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-/**
- * Get user profile
- * @returns {Promise<Object>} User profile data
- */
+// Get user profile
 export const getUserProfile = async () => {
   try {
     const response = await fetch(
@@ -41,16 +31,11 @@ export const getUserProfile = async () => {
 
     return await response.json();
   } catch (error) {
-    console.error('Get user profile error:', error);
     throw error;
   }
 };
 
-/**
- * Update user profile
- * @param {Object} profileData - Updated profile data
- * @returns {Promise<Object>} Updated user profile
- */
+// Update user profile
 export const updateUserProfile = async (profileData) => {
   try {
     const response = await fetch(
@@ -69,15 +54,11 @@ export const updateUserProfile = async (profileData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Update user profile error:', error);
     throw error;
   }
 };
 
-/**
- * Get all users (admin only)
- * @returns {Promise<Object>} All users data
- */
+// Get all users (admin)
 export const getAllUsers = async () => {
   try {
     const response = await fetch(
@@ -94,7 +75,6 @@ export const getAllUsers = async () => {
 
     return await response.json();
   } catch (error) {
-    console.error('Get all users error:', error);
     throw error;
   }
 };
@@ -129,7 +109,6 @@ export const getTeamUsers = async () => {
       message: result.message
     };
   } catch (error) {
-    console.error('Get team users error:', error);
     throw error;
   }
 };
@@ -157,7 +136,6 @@ export const createUser = async (userData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Create user error:', error);
     throw error;
   }
 };
@@ -186,7 +164,6 @@ export const updateUser = async (userId, userData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Update user error:', error);
     throw error;
   }
 };
@@ -213,7 +190,6 @@ export const deleteUser = async (userId) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Delete user error:', error);
     throw error;
   }
 };
@@ -241,7 +217,6 @@ export const createTeamUser = async (userData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Create team user error:', error);
     throw error;
   }
 };
@@ -270,7 +245,6 @@ export const updateTeamUser = async (userId, userData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Update team user error:', error);
     throw error;
   }
 };
@@ -297,7 +271,6 @@ export const deleteTeamUser = async (userId) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Delete team user error:', error);
     throw error;
   }
 };
