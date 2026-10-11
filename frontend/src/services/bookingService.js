@@ -36,17 +36,14 @@ const getAuthHeaders = () => {
  * Transform booking data from API format to UI format
  * @param {Object} booking - Booking data from API
  * @returns {Object} Transformed booking data
- / Transform booking data from API to UI format
-const transformBookingData = (booking) => {inished' for gray badge
-    'finished': 'finished',       // Keep as 'finished' for gray badge
-    'completed': 'finished',      // Map to 'finished' for gray badge
-    'cancel': 'cancelled',
-    'cancelled': 'cancell
-    'checkout': 'finished',
+ */
+const transformBookingData = (booking) => {
+  const statusMap = {
     'finished': 'finished',
     'completed': 'finished',
     'cancel': 'cancelled',
-    'cancelled': 'cancelled'
+    'cancelled': 'cancelled',
+    'checkout': 'finished',
   };
 
   let mappedStatus;
@@ -56,12 +53,9 @@ const transformBookingData = (booking) => {inished' for gray badge
   }
   else if (booking.status?.toLowerCase() === 'cancel' || booking.status?.toLowerCase() === 'cancelled') {
     mappedStatus = 'cancelled';
+  } else {
+    mappedStatus = statusMap[booking.status?.toLowerCase()] || booking.status;
   }
-    id: booking.id,
-    originalStatus: booking.status,
-    checkout_at: booking.checkout_at,
-    mappedStatus: mappedStatus
-  });
 
   // API already provides date, start_time, and end_time in correct format
   return {

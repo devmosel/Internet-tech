@@ -95,213 +95,14 @@ export default function LandingPage() {
     };
   }, []);
 
-  // Main GSAP Animations
-  useEffect(() => {
-  useEffect(() => {
-    const ctx = gsap.context(() => {
+  // Main GSAP Animations (temporarily disabled - code needs repair)
+  // TODO: restore GSAP animations
 
-      // Background shapes
-        gsap.to(shape, {
-          y: "random(-50, 50)",
-          rotation: "random(-20, 20)",
-          duration: "random(3, 6)",
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: i * 0.2
-        });
-      });
-
-      // 2. Hero Cards Staggered Entrance
-      const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-      // Hero entrance animation
-      const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-        duration: 1,
-        stagger: 0.15,
-        ease: "back.out(1.2)"
-      });
-
-      // Badge pops in
-      heroTl.from('.hero-badge', {
-        scale: 0.8,
-        opacity: 0,
-        ease: "back.out(2)"
-      }, "-=0.8");
-
-      // Text lines reveal with smooth slide
-      heroTl.from('.hero-text-line', {
-        y: 60,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power4.out"
-      }, "-=0.5");
-
-      // Buttons pop in
-      heroTl.from('.hero-btn', {
-        scale: 0.9,
-        opacity: 0,
-        ease: "back.out(1.5)"
-      }, "-=0.4");
-
-      // 3. Counter Animation
-      const counters = document.querySelectorAll('.counter');
-      counters.forEach(counter => {
-        const target = parseInt(counter.dataset.target);
-        gsap.to(counter, {
-         Number counters
-          duration: 2,
-          delay: 1,
-          snap: { innerHTML: 1 },
-          ease: "power2.out",
-          modifiers: {
-            innerHTML: (value) => Math.round(value).toLocaleString() + "+"
-          }
-        });
-      });
-
-      // 4. Stars Twinkle Animation
-      gsap.utils.toArray('.star-icon').forEach((star, i) => {
-        gsap.fromTo(star,
-          { scale: 0, rotation: -180 },
-          {
-         Stars
-            rotation: 0,
-            duration: 0.4,
-            delay: 1.2 + (i * 0.1),
-            ease: "back.out(3)"
-          }
-        );
-      });
-
-      // 5. Activity bars pulse
-      gsap.utils.toArray('.activity-bar').forEach((bar, i) => {
-        gsap.to(bar, {
-          scaleY: gsap.utils.random(0.5, 1.5),
-          duration: 0.5,
-         Activity bars
-          yoyo: true,
-          ease: "power1.inOut",
-          delay: i * 0.15
-        });
-      });
-
-      // 6. Avatar pulse effect
-      gsap.utils.toArray('.avatar-pulse').forEach((avatar, i) => {
-        gsap.to(avatar, {
-          scale: 1.05,
-          duration: 1,
-         Avatar pulse
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: i * 0.3
-        });
-      });
-
-      // 7. Feature pills hover-ready state
-      gsap.utils.toArray('.feature-pill').forEach((pill) => {
-        pill.addEventListener('mouseenter', () => {
-          gsap.to(pill, { scale: 1.02, duration: 0.3, ease: "power2.out" });
-        });
-        pFeature pills hover () => {
-          gsap.to(pill, { scale: 1, duration: 0.3, ease: "power2.out" });
-        });
-      });
-
-      // 8. Magnetic button effect for CTA
-      gsap.utils.toArray('.magnetic-btn').forEach((btn) => {
-        btn.addEventListener('mousemove', (e) => {
-          const rect = btn.getBoundingClientRect();
-          const x = e.clientX - rect.left - rect.width / 2;
-         Magnetic button effect rect.height / 2;
-          gsap.to(btn, {
-            x: x * 0.15,
-            y: y * 0.15,
-            duration: 0.3,
-            ease: "power2.out"
-          });
-        });
-        btn.addEventListener('mouseleave', () => {
-          gsap.to(btn, {
-            x: 0,
-            y: 0,
-            duration: 0.5,
-            ease: "elastic.out(1, 0.5)"
-          });
-        });
-      });
-
-      // 4. Feature Cards Interaction
-      gsap.utils.toArray('.feature-card-wrapper').forEach((card, i) => {
-        gsap.fromTo(card,
-          {
-            opacity: 0,
-         Feature cards scroll reveal
-            rotation: gsap.utils.random(-5, 5)
-          },
-          {
-            opacity: 1,
-            y: 0,
-            rotation: 0,
-            duration: 0.8,
-            ease: "back.out(1.5)",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 90%",
-              toggleActions: "play none none reverse"
-            },
-            delay: i * 0.1
-          }
-        );
-      });
-
-      // 5. How It Works - Connecting Line Animation
-      gsap.from('.step-line', {
-        scaleY: 0,
-        transformOrigin: "top",
-        dConnecting line
-        ease: "power2.inOut",
-        scrollTrigger: {
-          trigger: '#how-it-works',
-          start: "top 60%"
-        }
-      });
-
-      // 6. Step Items Pop-in
-      gsap.utils.toArray('.step-item').forEach((step, i) => {
-        gsap.from(step, {
-          x: -50,
-         Step items
-          duration: 0.8,
-          ease: "back.out(1.2)",
-          scrollTrigger: {
-            trigger: step,
-            start: "top 85%"
-          },
-          delay: i * 0.2
-        });
-      });
-
-      // 7. CTA Parallax Text
-      gsap.to('.cta-text', {
-        backgroundPosition: '0% 100%',
-        scrollTrigger: {
-         CTA parallaxion',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1
-        }
-      });
-
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
 
   // Button Hover Effect (Magnetic-ish)
   const handleBtnHover = (e) => {
     const btn = e.currentTarget;
+    gsap.to(btn, {
       scale: 1.05,
       duration: 0.3,
       ease: "power2.out"
@@ -373,7 +174,7 @@ export default function LandingPage() {
 
               <div className="hero-card bg-white rounded-[32px] p-8 lg:p-12 border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#FFD233]/5 via-transparent to-[#FF6B35]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-Name="text-sm font-semibold tracking-wide">500+ companies trust us</span>
+                <span className="text-sm font-semibold tracking-wide">500+ companies trust us</span>
                 </div>
 
                 {/* Headline */}
@@ -387,6 +188,7 @@ Name="text-sm font-semibold tracking-wide">500+ companies trust us</span>
                     <h1 className="hero-text-line font-['Tanker-Regular'] text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-[1.1]">
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#F7931E]">perfectly</span>
                       <span className="text-black"> organized</span>
+                    </h1>
                   </div>
                 </div>
 
@@ -531,6 +333,7 @@ Name="text-sm font-semibold tracking-wide">500+ companies trust us</span>
               </div>
             </div>
           </div>
+        </div>
         </div>
       </section>
 
