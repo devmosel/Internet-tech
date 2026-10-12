@@ -193,7 +193,7 @@ class BookingUseCase:
         if not booking:
             raise ValueError(f"Booking with ID {booking_id} not found")
         
-        now = datetime.now(utc=True)
+        now = datetime.utcnow()
         update_data = {'updated_at': now}
 
         # Handle based on action
