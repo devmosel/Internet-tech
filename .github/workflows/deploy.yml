@@ -1,0 +1,67 @@
+name: Deploy openbo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never let two deploys build at the same time on the same VPS.
+concurrency:
+  group: openbo-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, openbo]
+    env:
+      # Canonical app dir: the compose project (internet-tech) and its
+      # mariadb volume (internet-tech_mariadb_data) are bound to this path.
+      # Deploying from the runner's _work checkout would create a SECOND
+      # compose project with an empty database. Do not change this.
+      APP_DIR: /home/devmosel/workspace/projects/internet-tech
+      COMPOSE_PROJECT_NAME: internet-tech
+
+    steps:
+      - name: Sync app dir to pushed commit
+        run: |
+          set -euo pipefail
+          cd "$APP_DIR"
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::warning::Uncommitted local changes found - stashing them before deploy"
+            git stash push -u -m "autostash-before-deploy-$(date +%Y%m%d-%H%M%S)"
+          fi
+          git fetch --prune origin main
+          git reset --hard "$GITHUB_SHA"
+          echo "Now at: $(git log --oneline -1)"
+
+      - name: Build and restart containers
+        run: |
+          set -euo pipefail
+          cd "$APP_DIR"
+          docker compose -p internet-tech up -d --build --remove-orphans
+          docker compose -p internet-tech ps
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+          ok_be=0; ok_fe=0
+          for i in $(seq 1 30); do
+            be=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5001/api/health || echo 000)
+            fe=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001 || echo 000)
+            echo "attempt $i: backend=$be frontend=$fe"
+            if [ "$be" = "200" ]; then ok_be=1; fi
+            if [ "$fe" = "200" ]; then ok_fe=1; fi
+            if [ "$ok_be" = "1" ] && [ "$ok_fe" = "1" ]; then
+              echo "Both services healthy."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Health check failed (backend ok=$ok_be, frontend ok=$ok_fe)"
+          echo "--- backend logs ---";  docker logs --tail 60 openbo_backend  || true
+          echo "--- frontend logs ---"; docker logs --tail 60 openbo_frontend || true
+          exit 1
+
+      - name: Prune dangling images
+        if: always()
+        run: docker image prune -f
