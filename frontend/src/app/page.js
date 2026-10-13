@@ -52,7 +52,8 @@ export default function LandingPage() {
 
   // Interactive Tilt Logic for Hero Image
   useEffect(() => {
-    // Mouse tilt effect on hero it
+    // Mouse tilt effect on hero
+    const heroSection = heroRef.current;
     if (!heroSection) return;
 
     const handleMouseMove = (e) => {
